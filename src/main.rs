@@ -7,13 +7,14 @@ extern crate serde;
 extern crate log;
 
 use amethyst::assets::{PrefabLoader, PrefabLoaderSystem, RonFormat};
-use amethyst::controls::{FlyControlBundle, FlyControlTag};
+use std::hash::Hash;
+use amethyst::controls::{FlyControlBundle, FlyControlTag, FlyMovementSystem};
 use amethyst::core::transform::{Transform, TransformBundle};
-use amethyst::core::WithNamed;
+use amethyst::core::{WithNamed,Time};
 use amethyst::ecs::{
     Component, DenseVecStorage, Join, Read, ReadStorage, System, VecStorage, Write, WriteStorage,
 };
-use amethyst::input::InputBundle;
+use amethyst::input::{InputBundle, InputHandler};
 use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, DisplayConfig, DrawShaded, Pipeline, PosNormTex, RenderBundle, Stage,
@@ -54,8 +55,9 @@ impl Default for ObjectType {
 
 impl Collider for ObjectType {
     fn should_generate_contacts(&self, other: &ObjectType) -> bool {
-        *self == ObjectType::Player
-            && (*other == ObjectType::Scene || *other == ObjectType::KillZone)
+        /**self == ObjectType::Player
+            && (*other == ObjectType::Scene || *other == ObjectType::KillZone)*/
+            true
     }
 }
 
@@ -92,6 +94,72 @@ impl<'a> System<'a> for GravitySystem {
     }
 }
 
+/// The system that manages the fly movement.
+/// Generic parameters are the parameters for the InputHandler.
+pub struct FpsMovementSystem<A, B> {
+    /// The movement speed of the movement in units per second.
+    speed: f32,
+    /// The name of the input axis to locally move in the x coordinates.
+    right_input_axis: Option<A>,
+    /// The name of the input axis to locally move in the y coordinates.
+    jump_input_action: Option<B>,
+    /// The name of the input axis to locally move in the z coordinates.
+    forward_input_axis: Option<A>,
+}
+
+impl<A, B> FpsMovementSystem<A, B>
+where
+    A: Send + Sync + Hash + Eq + Clone + 'static,
+    B: Send + Sync + Hash + Eq + Clone + 'static,
+{
+    pub fn new(
+        speed: f32,
+        right_input_axis: Option<A>,
+        jump_input_action: Option<B>,
+        forward_input_axis: Option<A>,
+    ) -> Self {
+        FpsMovementSystem {
+            speed,
+            right_input_axis,
+            jump_input_action,
+            forward_input_axis,
+        }
+    }
+
+    fn get_axis(name: &Option<A>, input: &InputHandler<A, B>) -> f32 {
+        name.as_ref()
+            .and_then(|ref n| input.axis_value(n))
+            .unwrap_or(0.0) as f32
+    }
+}
+
+impl<'a, A, B> System<'a> for FpsMovementSystem<A, B>
+where
+    A: Send + Sync + Hash + Eq + Clone + 'static,
+    B: Send + Sync + Hash + Eq + Clone + 'static,
+{
+    type SystemData = (
+        Read<'a, Time>,
+        WriteStorage<'a, Transform>,
+        Read<'a, InputHandler<A, B>>,
+        ReadStorage<'a, FlyControlTag>,
+        WriteStorage<'a, ForceAccumulator<Vector3<f32>, Vector3<f32>>>,
+    );
+
+    fn run(&mut self, (time, mut transforms, input, tags, mut forces): Self::SystemData) {
+        let x = FpsMovementSystem::get_axis(&self.right_input_axis, &input);
+        //let y = FlyMovementSystem::get_axis(&self.up_input_axis, &input);
+        let z = FpsMovementSystem::get_axis(&self.forward_input_axis, &input);
+
+        let dir = Vector3::new(x, 0.0, z);
+
+        for (_, _, mut force) in (&transforms, &tags, &mut forces).join() {
+            //transform.move_along_local(dir, time.delta_seconds() * self.speed);
+            force.add_force(dir * self.speed);
+        }
+    }
+}
+
 struct GameState;
 
 impl<'a, 'b> SimpleState<'a, 'b> for GameState {
@@ -106,7 +174,7 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
         let player_entity = data.world
             .create_entity()
             .with(Transform::default())
-            //.with(FlyControlTag)
+            .with(FlyControlTag)
             .with(Camera::standard_3d(1920.0,1080.0))
             .with(ObjectType::Player)
             .with_dynamic_rigid_body(
@@ -123,6 +191,26 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
             .with(
                 ForceAccumulator::<Vector3<f32>,Vector3<f32>>::new()
             )
+            .build();
+
+        // floor collider temp
+        let mut tr = Transform::default();
+        tr.translation = [0.0,-5.0,0.0].into();
+        data.world
+            .create_entity()
+            .with(ObjectType::Scene)
+            .with_static_rigid_body(
+                Shape::new_simple_with_type(
+                    CollisionStrategy::FullResolution,
+                    CollisionMode::Discrete,
+                    Cuboid::new(5.0, 1.0,5.0).into(),
+                    ObjectType::Scene,
+                ),
+                BodyPose3::new(Point3::new(tr.translation.x, tr.translation.y,tr.translation.z), Quaternion::one()),
+                RigidBody::default(),
+                Mass3::infinite(),
+            )
+            .with(tr)
             .build();
 
         /*let mut rbp = RigidBodyParts::new(&data.world);
