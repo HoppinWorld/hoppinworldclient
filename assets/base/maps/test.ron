@@ -1,0 +1,29 @@
+
+#![enable(implicit_some)]
+Prefab (
+    entities: [
+        (
+            data: (
+                light: (ambient_color: ((0.5, 0.5, 0.5, 1.0))),
+            ),
+        ),
+        (
+            data: (
+                graphics: (
+                    mesh: Asset(File("assets/base/models/floor.obj", ObjFormat, ())),
+                    material: (
+                        albedo: Data(Rgba((1.0, 0.0, 0.0, 1.0,), (),)),
+                    ),
+                ),
+                transform: (
+                    translation: (
+                        x: 0.0,
+                        y: -5.0,
+                        z: 0.0,
+                    ),
+                    scale: (x: 2.0, y: 2.0, z: 2.0),
+                ),
+            ),
+        ),
+    ],
+)

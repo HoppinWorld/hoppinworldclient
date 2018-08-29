@@ -1,0 +1,10 @@
+(
+  axes: { 
+    "forward": Emulated(pos: Key(W), neg: Key(S)),
+    "right": Emulated(pos: Key(D), neg: Key(A)),
+  }, 
+  actions: { 
+    "jump": [Key(Space)],
+    "pause": [Key(Escape)],
+  },
+)
