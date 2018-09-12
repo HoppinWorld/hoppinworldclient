@@ -5,7 +5,7 @@ Prefab (
         (
             data: (
                 name: "Test map 01",
-                map: File("assets/base/maps/test01.gltf", GltfSceneFormat, (
+                map: File("assets/base/maps/hoppinworldtest1.glb", GltfSceneFormat, (
                     load_animations: false,
                     flip_v_coord: true,
                 )),

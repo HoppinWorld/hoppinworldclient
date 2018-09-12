@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "amethyst"
 version = "0.8.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_animation 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -85,7 +85,7 @@ dependencies = [
 [[package]]
 name = "amethyst_animation"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -101,7 +101,7 @@ dependencies = [
 [[package]]
 name = "amethyst_assets"
 version = "0.4.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "crossbeam 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -141,7 +141,7 @@ dependencies = [
 [[package]]
 name = "amethyst_audio"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -155,7 +155,7 @@ dependencies = [
 [[package]]
 name = "amethyst_config"
 version = "0.7.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -165,7 +165,7 @@ dependencies = [
 [[package]]
 name = "amethyst_controls"
 version = "0.2.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -178,7 +178,7 @@ dependencies = [
 [[package]]
 name = "amethyst_core"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "cgmath 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -202,7 +202,7 @@ replace = "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch
 [[package]]
 name = "amethyst_gltf"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_animation 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -222,7 +222,7 @@ dependencies = [
 [[package]]
 name = "amethyst_input"
 version = "0.4.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_config 0.7.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -236,7 +236,7 @@ dependencies = [
 [[package]]
 name = "amethyst_locale"
 version = "0.2.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -246,7 +246,7 @@ dependencies = [
 [[package]]
 name = "amethyst_renderer"
 version = "0.8.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -308,7 +308,7 @@ dependencies = [
 [[package]]
 name = "amethyst_ui"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_audio 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -335,7 +335,7 @@ dependencies = [
 [[package]]
 name = "amethyst_utils"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#85b2378ee06fc166af39b42b0c51ce7a596f9b24"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#707743314c4e883f583dc88f51793393496be105"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_controls 0.2.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -989,7 +989,7 @@ dependencies = [
  "gfx 0.17.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_core 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "ordered-float 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ordered-float 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusttype 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "twox-hash 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1604,11 +1604,11 @@ dependencies = [
 
 [[package]]
 name = "ordered-float"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
- "unreachable 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unreachable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1942,7 +1942,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "approx 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "arrayvec 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "ordered-float 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ordered-float 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "stb_truetype 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2295,14 +2295,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "unicode-xid"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "unreachable"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "void 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "unreachable"
@@ -2663,7 +2655,7 @@ dependencies = [
 "checksum objc-foundation 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1add1b659e36c9607c7aab864a76c7a4c2760cd0cd2e120f3fb8b952c7e22bf9"
 "checksum objc_id 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c92d4ddb4bd7b50d730c215ff871754d0da6b2178849f8a2a2ab69712d0c073b"
 "checksum ogg 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "013b78ceb7fb82555a2f8a95d8e40866fe64a5d15b83c51b3e1fdd40cd903ed3"
-"checksum ordered-float 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "58d25b6c0e47b20d05226d288ff434940296e7e2f8b877975da32f862152241f"
+"checksum ordered-float 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7004d4db808c6db5a9f54ec5c85918ad01a1ef9b35bf4dfa1e2ccba28de0c1b4"
 "checksum osmesa-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "88cfece6e95d2e717e0872a7f53a8684712ad13822a7979bc760b9c77ec0013b"
 "checksum owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cdf84f41639e037b484f93433aa3897863b561ed65c6e59c7073d7c561710f37"
 "checksum parking_lot 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)" = "d4d05f1349491390b1730afba60bb20d55761bef489a954546b58b4b34e1e2ac"
@@ -2745,7 +2737,6 @@ dependencies = [
 "checksum unicode-width 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "882386231c45df4700b275c7ff55b6f3698780a650026380e72dabe76fa46526"
 "checksum unicode-xid 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "8c1f860d7d29cf02cb2f3f359fd35991af3d30bac52c57d265a3c461074cb4dc"
 "checksum unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc72304796d0818e357ead4e000d19c9c174ab23dc11093ac919054d20a6a7fc"
-"checksum unreachable 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1f2ae5ddb18e1c92664717616dd9549dde73f539f01bd7b77c2edb2446bdff91"
 "checksum unreachable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "382810877fe448991dfc7f0dd6e3ae5d58088fd0ea5e35189655f84e6814fa56"
 "checksum utf8-ranges 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "fd70f467df6810094968e2fce0ee1bd0e87157aceb026a8c083bcf5e25b9efe4"
 "checksum vec_map 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "05c78687fb1a80548ae3250346c3db86a80a7cdd77bda190189f2d0a0987c81a"
