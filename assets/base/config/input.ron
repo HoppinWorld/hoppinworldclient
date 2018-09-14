@@ -1,6 +1,6 @@
 (
   axes: { 
-    "forward": Emulated(pos: Key(W), neg: Key(S)),
+    "forward": Emulated(pos: Key(S), neg: Key(W)),
     "right": Emulated(pos: Key(D), neg: Key(A)),
   }, 
   actions: { 
