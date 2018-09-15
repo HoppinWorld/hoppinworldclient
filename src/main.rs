@@ -822,13 +822,17 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
         	}))
         	.build();
 
-        let font = data.world.read_resource::<AssetLoader>().load("font/Arial.ttf", FontFormat::Ttf, (), &mut data.world.write_resource(), &mut data.world.write_resource(), &data.world.read_resource()).expect("Failed to load font");
+        let font = data.world.read_resource::<AssetLoader>().load("font/arial.ttf", FontFormat::Ttf, (), &mut data.world.write_resource(), &mut data.world.write_resource(), &data.world.read_resource()).expect("Failed to load font");
         data.world
             .create_entity()
             .with(UiTransform::new("timer_text".to_string(), Anchor::TopMiddle, 0.0, 500.0, 0.0, 512.0, 256.0, -1))
             .with(UiText::new(font, "timer here".to_string(), [1.0,1.0,1.0,1.0], 30.0))
             .with(Timer::default())
             .build();
+
+        data.world.exec(|mut creator: UiCreator| {
+            creator.create("assets/base/prefabs/gameplay_ui.ron", ());
+        });
 
         MyPhysicalEntityParts::setup(&mut data.world.res)
     }
@@ -899,6 +903,8 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
     			}
     		}
         }
+
+        (&data.world.read_storage::<UiTransform>(),).join().for_each(|tr| info!("ui tr: {:?}", tr));
 
         Trans::None
     }

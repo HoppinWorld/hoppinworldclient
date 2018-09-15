@@ -12,7 +12,7 @@ amethyst-rhusics = { git = "https://github.com/amethyst/amethyst-rhusics" }
 serde = "1.0"
 serde_derive = "1.0"
 log = "0.4"
-winit = "0.15.0"
+winit = "0.17.0"
 partial_function = "0.4.0"
 derive-new = "0.5"
 specs-derive = { git = "https://github.com/jojolepro/specs", branch = "derive" }

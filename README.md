@@ -1,4 +1,4 @@
-# hoppinworldv2
+# HoppinWorld
 HoppinWorld V2 - Amethyst edition :)
 
 https://trello.com/b/tmVhEsVR/hoppinworld
