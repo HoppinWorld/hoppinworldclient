@@ -20,7 +20,7 @@ use amethyst::ecs::error::Error as ECSError;
 use amethyst::shrev::{ReaderId, EventChannel};
 use std::hash::Hash;
 use amethyst::ui::*;
-use amethyst::controls::{FlyControlBundle, FlyControlTag, FlyMovementSystem,WindowFocus,MouseFocusUpdateSystem,FreeRotationSystem,CursorHideSystem};
+use amethyst::controls::{FlyControlBundle, FlyControlTag, FlyMovementSystem,WindowFocus,MouseFocusUpdateSystem,FreeRotationSystem,CursorHideSystem, HideCursor};
 use amethyst::core::transform::{Transform, TransformBundle, Parent};
 use amethyst::core::{WithNamed,Time, Named, Stopwatch};
 use amethyst::ecs::{
@@ -28,7 +28,7 @@ use amethyst::ecs::{
 };
 use amethyst::ecs::storage::AntiStorage;
 use amethyst::ecs::prelude::ParallelIterator;
-use amethyst::input::{InputBundle, InputHandler};
+use amethyst::input::{InputBundle, InputHandler, is_key_down};
 use amethyst::prelude::*;
 use amethyst::renderer::*;
 use amethyst::utils::scene::BasicScenePrefab;
@@ -57,6 +57,29 @@ type ScenePrefab = BasicScenePrefab<Vec<PosNormTex>>;
 type Shape = CollisionShape<Primitive3<f32>, BodyPose3<f32>, Aabb3<f32>, ObjectType>;
 type DefaultPhysicalEntityParts<'a, T> = PhysicalEntityParts<'a, Primitive3<f32>,T,Quaternion<f32>,Vector3<f32>,Vector3<f32>,Matrix3<f32>,Aabb3<f32>,BodyPose3<f32>>;
 type MyPhysicalEntityParts<'a> = DefaultPhysicalEntityParts<'a, ObjectType>;
+type CustomState<'a,'b> = State<GameData<'a,'b>, CustomStateEvent>;
+type CustomTrans<'a,'b> = Trans<GameData<'a,'b>, CustomStateEvent>;
+
+const DISPLAY_SPEED_MULTIPLIER: f32 = 50.0;
+
+
+
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, Copy)]
+pub enum CustomStateEvent {
+    // Actually a redirect to MapSelectState in this case.
+    GotoMainMenu,
+    MapFinished,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+pub enum RemovalId {
+    Scene,
+    GameplayUi,
+    MenuUi,
+    PauseUi,
+    ResultUi,
+    MapSelectUi,
+}
 
 #[repr(u8)]
 #[derive(Debug, Clone, PartialOrd, PartialEq, Component)]
@@ -228,12 +251,13 @@ where
         WriteStorage<'a, RotationControl>,
         ReadStorage<'a, FlyControlTag>,
         Read<'a, WindowFocus>,
+        Read<'a, HideCursor>,
     );
 
-    fn run(&mut self, (events, mut transforms, mut body_poses, mut next_body_poses, mut rotation_controls, fly_controls,focus): Self::SystemData) {
+    fn run(&mut self, (events, mut transforms, mut body_poses, mut next_body_poses, mut rotation_controls, fly_controls,focus,hide): Self::SystemData) {
         let focused = focus.is_focused;
         for event in events.read(&mut self.event_reader.as_mut().unwrap()) {
-            if focused {
+            if focused && hide.hide {
                 match *event {
                     Event::DeviceEvent { ref event, .. } => match *event {
                         DeviceEvent::MouseMotion { delta: (x, y) } => {
@@ -272,20 +296,30 @@ impl<'a> System<'a> for GroundCheckerSystem {
     	Entities<'a>,
         ReadStorage<'a, Transform>,
         WriteStorage<'a, Grounded>,
+        ReadStorage<'a, ObjectType>,
         Read<'a, DynamicBoundingVolumeTree3<f32>>,
         Read<'a, Time>,
     );
 
-    fn run(&mut self, (entities, transforms, mut grounded, tree, time): Self::SystemData) {
+    fn run(&mut self, (entities, transforms, mut grounded, objecttypes,tree, time): Self::SystemData) {
     	let down = -Vector3::unit_y();
     	for (entity, transform, mut grounded) in (&*entities, &transforms, &mut grounded).join() {
     		let mut ground = false;
 
     		let ray = Ray3::new(Point3::from_vec(transform.translation), down);
+            // For all in ray
 		    for (v, p) in query_ray(&*tree, ray) {
+                // Not self
 		    	if v.value != entity {
+                    // If close enough
 		    		if (transform.translation - Vector3::new(p.x,p.y,p.z)).magnitude() <= grounded.distance_check {
-			    		ground = true;
+                        // If we can jump off that type of collider
+                        if let Some(obj_type) = objecttypes.get(v.value) {
+                            match obj_type {
+                                ObjectType::Scene => ground = true,
+                                _ => {},
+                            }
+                        }
 			            //info!("hit bounding volume of {:?} at point {:?}", v.value, p);
 		            }
 		        }
@@ -661,17 +695,50 @@ where
         .unwrap_or(0.0) as f32
 }
 
-#[derive(Default, Component)]
-pub struct Timer {
-	pub timer: Stopwatch,
+/// Calculates in relative time using the internal engine clock.
+#[derive(Default)]
+pub struct RelativeTimer {
+	pub start: f64,
+    pub current: f64,
+    pub running: bool,
 }
 
-impl UiAutoText for Timer {
-	fn get_text(&self) -> String {
-		((duration_to_secs(self.timer.elapsed()) * 1000.0).ceil() / 1000.0).to_string()
+impl RelativeTimer {
+	pub fn get_text(&self) -> String {
+		((self.duration() * 1000.0).ceil() / 1000.0).to_string()
 	}
+    pub fn duration(&self) -> f64 {
+        self.current - self.start
+    }
+    pub fn start(&mut self, cur_time: f64) {
+        self.start = cur_time;
+        self.current = cur_time;
+        self.running = true;
+    }
+    pub fn update(&mut self, cur_time: f64) {
+        if self.running {
+            self.current = cur_time;
+        }
+    }
+    pub fn stop(&mut self) {
+        self.running = false;
+    }
 }
 
+pub struct RelativeTimerSystem;
+
+impl<'a> System<'a> for RelativeTimerSystem {
+    type SystemData = (Write<'a, RelativeTimer>, Read<'a, Time>);
+    fn run(&mut self, (mut timer, time): Self::SystemData) {
+        timer.update(time.absolute_time_seconds());
+    }
+}
+
+#[derive(Default,Component,Serialize,Deserialize)]
+pub struct Player;
+
+/// Very game dependent.
+/// Don't try to make that generic.
 #[derive(Default)]
 pub struct ContactSystem{
 	contact_reader: Option<ReaderId<ContactEvent<Entity, Point3<f32>>>>,
@@ -679,49 +746,69 @@ pub struct ContactSystem{
 
 impl<'a> System<'a> for ContactSystem {
 	type SystemData = (
+        Entities<'a>,
 		Read<'a, EventChannel<ContactEvent<Entity, Point3<f32>>>>,
-		WriteStorage<'a, Timer>,
+		Write<'a, RelativeTimer>,
+        Read<'a, Time>,
 		ReadStorage<'a, ObjectType>,
+        ReadStorage<'a, Player>,
+        ReadStorage<'a, BhopMovement3D>,
+        WriteStorage<'a, NextFrame<Velocity3<f32>>>,
+        Write<'a, EventChannel<CustomStateEvent>>,
 	);
 
-	fn run(&mut self, (contacts, mut timers, object_types): Self::SystemData) {
+	fn run(&mut self, (entities, contacts, mut timer, time, object_types, players, bhop_movements, mut velocities, mut state_eventchannel): Self::SystemData) {
 		for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
-			for (mut timer,) in (&mut timers,).join() {
-				//info!("Collision: {:?}",contact);
-				let type1 = object_types.get(contact.bodies.0);
-				let type2 = object_types.get(contact.bodies.1);
+			//info!("Collision: {:?}",contact);
+			let type1 = object_types.get(contact.bodies.0);
+			let type2 = object_types.get(contact.bodies.1);
 
-				if type1.is_none() || type2.is_none() {
-					continue;
-				}
-				let type1 = type1.unwrap();
-				let type2 = type2.unwrap();
+			if type1.is_none() || type2.is_none() {
+				continue;
+			}
+			let type1 = type1.unwrap();
+			let type2 = type2.unwrap();
 
-				let (player,other) = if *type1 == ObjectType::Player {
-					//(contact.bodies.0,contact.bodies.1)
-					(type1, type2)
-				} else if *type2 == ObjectType::Player {
-					//(contact.bodies.1,contact.bodies.0)
-					(type2, type1)
-				} else {
-					continue;
-				};
+			let (player,other, player_entity) = if *type1 == ObjectType::Player {
+				//(contact.bodies.0,contact.bodies.1)
+				(type1, type2, contact.bodies.0)
+			} else if *type2 == ObjectType::Player {
+				//(contact.bodies.1,contact.bodies.0)
+				(type2, type1, contact.bodies.1)
+			} else {
+				continue;
+			};
 
-				match other {
-					ObjectType::StartZone => {
-						timer.timer.restart();
-						info!("start zone!");
-					},
-					ObjectType::EndZone => {
-						timer.timer.stop();
-						info!("Finished! time: {:?}", timer.timer);
-					},
-					ObjectType::KillZone => {
-						info!("you are ded!");
-					},
-					_ => {},
-				}
-        	}
+			match other {
+				ObjectType::StartZone => {
+					timer.start(time.absolute_time_seconds());
+                    // Also limit player velocity while touching the StartZone to prevent any early starts.
+                    // Not sure if this should go into state or not. Since it is heavily related to gameplay I'll put it here.
+                    for (entity, _, movement, mut velocity) in (&*entities, &players, &bhop_movements, &mut velocities).join() {
+                        if entity == player_entity {
+                            let max_vel = movement.max_velocity_ground;
+                            let cur_vel3 = velocity.value.linear().clone();
+                            let mut cur_vel_flat = Vector2::new(cur_vel3.x, cur_vel3.z);
+                            let cur_vel_flat_mag = cur_vel_flat.magnitude();
+                            if cur_vel_flat_mag >= max_vel {
+                                cur_vel_flat = cur_vel_flat.normalize() * max_vel;
+                                velocity.value.set_linear(Vector3::new(cur_vel_flat.x, cur_vel3.y, cur_vel_flat.y))
+                            }
+                        }
+                    }
+
+					info!("start zone!");
+				},
+				ObjectType::EndZone => {
+					timer.stop();
+					info!("Finished! time: {:?}", timer.duration());
+                    state_eventchannel.single_write(CustomStateEvent::MapFinished);
+				},
+				ObjectType::KillZone => {
+					info!("you are ded!");
+				},
+				_ => {},
+			}
         }
 	}
 
@@ -733,15 +820,287 @@ impl<'a> System<'a> for ContactSystem {
     }
 }
 
+#[derive(Default, Serialize, Deserialize, Clone, Debug)]
+pub struct Stats {
+
+}
+
+/// Very game dependent.
+pub struct UiUpdaterSystem;
+
+impl<'a> System<'a> for UiUpdaterSystem {
+    type SystemData = (
+        Read<'a, RelativeTimer>,
+        Read<'a, Stats>,
+        ReadStorage<'a, Velocity3<f32>>,
+        ReadStorage<'a, Jump>,
+        ReadStorage<'a, UiTransform>,
+        WriteStorage<'a, UiText>,
+        ReadStorage<'a, Player>,
+    );
+
+    fn run(&mut self, (timer, stat, velocities, jumps, ui_transforms, mut texts, players): Self::SystemData) {
+        for (ui_transform, mut text) in (&ui_transforms, &mut texts).join() {
+            match &*ui_transform.id {
+                "timer" => {
+                    text.text = timer.get_text();
+                },
+                "pb" => {
+
+                },
+                "wr" => {
+
+                },
+                "segment" => {
+
+                },
+                "speed" => {
+                    for (_, velocity) in (&players, &velocities).join() {
+                        let vel = velocity.linear();
+                        let vel_flat = Vector3::new(vel.x, 0.0, vel.z);
+                        let mag = vel_flat.magnitude() * DISPLAY_SPEED_MULTIPLIER;
+
+                        text.text = avg_float_to_string(mag, 1);
+                    }
+                },
+                _ => {},
+            }
+        }
+    }
+}
+
+pub fn avg_float_to_string(value: f32, decimals: u32) -> String {
+    let mult = 10.0_f32.powf(decimals as f32);
+    ((value * mult).ceil() / mult).to_string()
+}
+
 
 #[derive(Default)]
-struct GameState {
+struct InitState;
+
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for InitState {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        data.world.register::<ObjectType>();
+        data.world.register::<Removal<RemovalId>>();
+    }
+
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
+        data.data.update(&mut data.world);
+        Trans::Switch(Box::new(MainMenuState))
+    }
+}
+
+
+#[derive(Default)]
+struct MainMenuState;
+
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MainMenuState {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        let hide_cursor = HideCursor {
+            hide: false,
+        };
+        data.world.add_resource(hide_cursor);
+
+        data.world.register::<ObjectType>();
+        data.world.register::<Removal<RemovalId>>();
+
+        let ui_root = data.world.exec(|mut creator: UiCreator| {
+            creator.create("assets/base/prefabs/menu_ui.ron", ())
+        });
+        data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::MenuUi)).expect("Failed to insert removalid to ui_root for main menu state.");
+
+    }
+
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
+        data.data.update(&mut data.world);
+        Trans::None
+    }
+
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent<CustomStateEvent>) -> CustomTrans<'a, 'b> {
+        match event {
+            StateEvent::Ui(UiEvent{event_type: UiEventType::Click, target: entity}) => {
+                if let Some(ui_transform) = data.world.read_storage::<UiTransform>().get(entity) {
+                    match &*ui_transform.id {
+                        "play_button" => Trans::Switch(Box::new(MapSelectState::default())),
+                        "quit_button" => Trans::Quit,
+                        _ => Trans::None
+                    }
+                } else {
+                    Trans::None
+                }
+            },
+            _ => Trans::None,
+        }
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        exec_removal(&data.world.entities(), &data.world.read_storage(), RemovalId::MenuUi);
+    }
+}
+
+#[derive(Default)]
+struct MapSelectState;
+
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapSelectState {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        let ui_root = data.world.exec(|mut creator: UiCreator| {
+            creator.create("assets/base/prefabs/map_select_ui.ron", ())
+        });
+        data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::MapSelectUi)).expect("Failed to insert removalid to ui_root for map select state.");
+    }
+
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
+        data.data.update(&mut data.world);
+        Trans::None
+    }
+
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent<CustomStateEvent>) -> CustomTrans<'a, 'b> {
+        match event {
+            StateEvent::Ui(UiEvent{event_type: UiEventType::Click, target: entity}) => {
+                if let Some(ui_transform) = data.world.read_storage::<UiTransform>().get(entity) {
+                    match &*ui_transform.id {
+                        "map1_test" => {
+                            Trans::Switch(Box::new(MapLoadState::default()))
+                        },
+                        "back_button" => {
+                            Trans::Switch(Box::new(MainMenuState::default()))
+                        },
+                        _ => Trans::None
+                    }
+                } else {
+                    Trans::None
+                }
+            },
+            StateEvent::Window(ev) => {
+                if is_key_down(&ev, VirtualKeyCode::Escape) {
+                    Trans::Switch(Box::new(MainMenuState::default()))
+                } else {
+                    Trans::None
+                }
+            }
+            _ => Trans::None,
+        }
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        exec_removal(&data.world.entities(), &data.world.read_storage(), RemovalId::MapSelectUi);
+    }
+}
+
+#[derive(Default)]
+struct GameplayState;
+
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for GameplayState {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        data.world.write_resource::<HideCursor>().hide = true;
+        data.world.write_resource::<Time>().set_time_scale(1.0);
+    }
+
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
+        time_sync(&data.world);
+        data.data.update(&mut data.world);
+        Trans::None
+    }
+
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent<CustomStateEvent>) -> CustomTrans<'a, 'b> {
+        // TODO: Map finished
+        match event {
+            StateEvent::Window(ev) => {
+                if is_key_down(&ev, VirtualKeyCode::Escape) {
+                    Trans::Push(Box::new(PauseMenuState::default()))
+                } else {
+                    Trans::None
+                }
+            },
+            StateEvent::Custom(CustomStateEvent::GotoMainMenu) => {
+                Trans::Switch(Box::new(MapSelectState::default()))
+            },
+            StateEvent::Custom(CustomStateEvent::MapFinished) => {
+                Trans::Switch(Box::new(ResultState::default()))
+            },
+            _ => Trans::None,
+        }
+    }
+
+    fn on_pause(&mut self, data: StateData<GameData>) {
+        data.world.write_resource::<HideCursor>().hide = false;
+        data.world.write_resource::<Time>().set_time_scale(0.0);
+    }
+
+    fn on_resume(&mut self, data: StateData<GameData>) {
+        data.world.write_resource::<HideCursor>().hide = true;
+        data.world.write_resource::<Time>().set_time_scale(1.0);
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        data.world.write_resource::<HideCursor>().hide = false;
+        // Not sure if I should put 0. Might cause errors later when implementing replays and stuff.
+        data.world.write_resource::<Time>().set_time_scale(1.0);
+        exec_removal(&data.world.entities(), &data.world.read_storage(), RemovalId::Scene);
+        exec_removal(&data.world.entities(), &data.world.read_storage(), RemovalId::GameplayUi);
+    }
+}
+
+#[derive(Default)]
+struct PauseMenuState;
+
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for PauseMenuState {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        let ui_root = data.world.exec(|mut creator: UiCreator| {
+            creator.create("assets/base/prefabs/pause_ui.ron", ())
+        });
+        data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::PauseUi)).expect("Failed to insert removalid to ui_root for pause state.");
+    }
+
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
+        // Necessary otherwise rhusics will keep the same DeltaTime and will not be paused.
+        time_sync(&data.world);
+        data.data.update(&mut data.world);
+        Trans::None
+    }
+
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent<CustomStateEvent>) -> CustomTrans<'a, 'b> {
+        match event {
+            StateEvent::Ui(UiEvent{event_type: UiEventType::Click, target: entity}) => {
+                if let Some(ui_transform) = data.world.read_storage::<UiTransform>().get(entity) {
+                    match &*ui_transform.id {
+                        "resume_button" => Trans::Pop,
+                        "quit_button" => {
+                            data.world.write_resource::<EventChannel<CustomStateEvent>>().single_write(CustomStateEvent::GotoMainMenu);
+                            Trans::Pop
+                        },
+                        _ => Trans::None
+                    }
+                } else {
+                    Trans::None
+                }
+            },
+            StateEvent::Window(ev) => {
+                if is_key_down(&ev, VirtualKeyCode::Escape) {
+                    Trans::Pop
+                } else {
+                    Trans::None
+                }
+            }
+            _ => Trans::None,
+        }
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        exec_removal(&data.world.entities(), &data.world.read_storage(), RemovalId::PauseUi);
+    }
+}
+
+
+#[derive(Default)]
+struct MapLoadState {
     load_progress: Option<ProgressCounter>,
     init_done: bool,
 }
 
-impl<'a, 'b> SimpleState<'a, 'b> for GameState {
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapLoadState {
     fn on_start(&mut self, data: StateData<GameData>) {
+        data.world.write_resource::<Time>().set_time_scale(0.0);
     	self.init_done = false;
 
         let mut pg = ProgressCounter::new();
@@ -758,11 +1117,10 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
         );
         self.load_progress = Some(pg);
 
-        data.world.create_entity().with(scene_handle).build();
+        let scene_root = data.world.create_entity().with(scene_handle).build();
+        data.world.write_storage::<Removal<RemovalId>>().insert(scene_root, Removal::new(RemovalId::Scene)).expect("Failed to insert removalid to scene for gameplay state.");
 
         data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
-
-        data.world.register::<ObjectType>();
 
         let mut tr = Transform::default();
         tr.translation = [0.0,5.0,0.0].into();
@@ -778,6 +1136,7 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
             .with(movement)
             .with(ground_friction)
             .with(Jump::new(true, true, 50.0, true))
+            .with(Player)
             .with_dynamic_physical_entity(
             	Shape::new_simple_with_type(
 	                CollisionStrategy::FullResolution,
@@ -794,6 +1153,7 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
             .with(
                 ForceAccumulator::<Vector3<f32>,Vector3<f32>>::new()
             )
+            .with(Removal::new(RemovalId::Scene))
             .build();
 
         let mut tr = Transform::default();
@@ -820,26 +1180,26 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
         		radius: 60.0,
         		smoothness: 4.0,
         	}))
+            .with(Removal::new(RemovalId::Scene))
         	.build();
 
-        let font = data.world.read_resource::<AssetLoader>().load("font/arial.ttf", FontFormat::Ttf, (), &mut data.world.write_resource(), &mut data.world.write_resource(), &data.world.read_resource()).expect("Failed to load font");
+        /*let font = data.world.read_resource::<AssetLoader>().load("font/arial.ttf", FontFormat::Ttf, (), &mut data.world.write_resource(), &mut data.world.write_resource(), &data.world.read_resource()).expect("Failed to load font");
         data.world
             .create_entity()
             .with(UiTransform::new("timer_text".to_string(), Anchor::TopMiddle, 0.0, 500.0, 0.0, 512.0, 256.0, -1))
             .with(UiText::new(font, "timer here".to_string(), [1.0,1.0,1.0,1.0], 30.0))
-            .with(Timer::default())
-            .build();
+            .with(RelativeTimer::default())
+            .build();*/
 
-        data.world.exec(|mut creator: UiCreator| {
-            creator.create("assets/base/prefabs/gameplay_ui.ron", ());
+        let ui_root = data.world.exec(|mut creator: UiCreator| {
+            creator.create("assets/base/prefabs/gameplay_ui.ron", ())
         });
+        data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::GameplayUi)).expect("Failed to insert removalid to ui_root for gameplay state.");
 
         MyPhysicalEntityParts::setup(&mut data.world.res)
     }
 
-    fn update(&mut self, data: &mut StateData<GameData>) -> SimpleTrans<'a, 'b> {
-        time_sync(&data.world);
-
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         if !self.init_done && self.load_progress.as_ref().unwrap().is_complete() {
         	info!("BBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
     		let entity_sizes = (&*data.world.entities(), &data.world.read_storage::<Transform>(), &data.world.read_storage::<MeshData>(), &data.world.read_storage::<Named>()).par_join().map(|(entity,transform,mesh_data,name)| {
@@ -902,11 +1262,60 @@ impl<'a, 'b> SimpleState<'a, 'b> for GameState {
 	    			}
     			}
     		}
+        } else if self.init_done {
+            return Trans::Switch(Box::new(GameplayState::default()));
         }
 
         (&data.world.read_storage::<UiTransform>(),).join().for_each(|tr| info!("ui tr: {:?}", tr));
 
+        data.data.update(&mut data.world);
         Trans::None
+    }
+}
+
+#[derive(Default)]
+struct ResultState;
+
+impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for ResultState {
+    fn on_start(&mut self, data: StateData<GameData>) {
+        let ui_root = data.world.exec(|mut creator: UiCreator| {
+            creator.create("assets/base/prefabs/result_ui.ron", ())
+        });
+        data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::ResultUi)).expect("Failed to insert removalid to ui_root for result state.");
+    }
+
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
+        data.data.update(&mut data.world);
+        Trans::None
+    }
+
+    fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent<CustomStateEvent>) -> CustomTrans<'a, 'b> {
+        match event {
+            StateEvent::Ui(UiEvent{event_type: UiEventType::Click, target: entity}) => {
+                if let Some(ui_transform) = data.world.read_storage::<UiTransform>().get(entity) {
+                    match &*ui_transform.id {
+                        "back_button" => {
+                            Trans::Switch(Box::new(MapSelectState::default()))
+                        },
+                        _ => Trans::None
+                    }
+                } else {
+                    Trans::None
+                }
+            },
+            StateEvent::Window(ev) => {
+                if is_key_down(&ev, VirtualKeyCode::Escape) {
+                    Trans::Switch(Box::new(MapSelectState::default()))
+                } else {
+                    Trans::None
+                }
+            }
+            _ => Trans::None,
+        }
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        exec_removal(&data.world.entities(), &data.world.read_storage(), RemovalId::ResultUi);
     }
 }
 
@@ -950,6 +1359,7 @@ fn main() -> amethyst::Result<()> {
     );
 
     let game_data = GameDataBuilder::default()
+        .with(RelativeTimerSystem, "relative_timer", &[])
     	.with(
             PrefabLoaderSystem::<ScenePrefab>::default(),
             "map_loader",
@@ -971,11 +1381,12 @@ fn main() -> amethyst::Result<()> {
         .with(GroundCheckerSystem, "ground_checker", &[])
         .with(JumpSystem::default(), "jump", &["ground_checker"])
         .with(GroundFrictionSystem, "ground_friction", &["ground_checker", "jump"])
-        .with(BhopMovementSystem::<String,String>::new(Some(String::from("right")),Some(String::from("forward"))), "air_bhop_movement", &["free_rotation", "jump", "ground_friction", "ground_checker"])
+        .with(BhopMovementSystem::<String,String>::new(Some(String::from("right")),Some(String::from("forward"))), "bhop_movement", &["free_rotation", "jump", "ground_friction", "ground_checker"])
         .with(GravitySystem, "gravity", &[])
         .with_bundle(TransformBundle::new().with_dep(&[]))?
-        .with(ContactSystem::default(), "contacts", &[])
-        .with(UiAutoTextSystem::<Timer>::default(), "timer_text_update", &[])
+        .with(ContactSystem::default(), "contacts", &["bhop_movement"])
+        .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
+        //.with(UiAutoTextSystem::<RelativeTimer>::default(), "timer_text_update", &[])
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?
@@ -985,7 +1396,7 @@ fn main() -> amethyst::Result<()> {
         .with_barrier()
         .with_bundle(DefaultPhysicsBundle3::<ObjectType>::new().with_spatial())?
         .with_bundle(RenderBundle::new(pipe, Some(display_config)))?;
-    let mut game = Application::build(resources_directory, GameState::default())?
+    let mut game = Application::build(resources_directory, InitState::default())?
     	.with_resource(asset_loader)
     	.with_resource(AssetLoaderInternal::<FontAsset>::new())
     	.build(game_data)?;

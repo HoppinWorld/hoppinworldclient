@@ -23,7 +23,7 @@ dependencies = [
 [[package]]
 name = "amethyst"
 version = "0.8.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_animation 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -65,8 +65,8 @@ dependencies = [
  "partial_function 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -85,7 +85,7 @@ dependencies = [
 [[package]]
 name = "amethyst_animation"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -95,13 +95,13 @@ dependencies = [
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "minterpolate 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "amethyst_assets"
 version = "0.4.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "crossbeam 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -113,7 +113,7 @@ dependencies = [
  "parking_lot 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -133,7 +133,7 @@ dependencies = [
  "parking_lot 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -141,44 +141,44 @@ dependencies = [
 [[package]]
 name = "amethyst_audio"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "cpal 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "amethyst_config"
 version = "0.7.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "amethyst_controls"
 version = "0.2.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_input 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_renderer 0.8.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "winit 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "amethyst_core"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "cgmath 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -186,7 +186,7 @@ dependencies = [
  "hibitset 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shrev 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -202,7 +202,7 @@ replace = "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch
 [[package]]
 name = "amethyst_gltf"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_animation 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -216,19 +216,19 @@ dependencies = [
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "mikktspace 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "amethyst_input"
 version = "0.4.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_config 0.7.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "derivative 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "winit 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -236,7 +236,7 @@ dependencies = [
 [[package]]
 name = "amethyst_locale"
 version = "0.2.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -246,7 +246,7 @@ dependencies = [
 [[package]]
 name = "amethyst_renderer"
 version = "0.8.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -266,7 +266,7 @@ dependencies = [
  "image 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -297,7 +297,7 @@ dependencies = [
  "imagefmt 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -308,7 +308,7 @@ dependencies = [
 [[package]]
 name = "amethyst_ui"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_audio 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
@@ -324,7 +324,7 @@ dependencies = [
  "hibitset 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -335,13 +335,13 @@ dependencies = [
 [[package]]
 name = "amethyst_utils"
 version = "0.3.0"
-source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#92f0dcb1d95626b928768b8f2371745e70267427"
+source = "git+https://github.com/jojolepro/amethyst?branch=hoppinworld#a37243a0247132d9a10a33466ae8c3baadf43bc4"
 dependencies = [
  "amethyst_assets 0.4.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_controls 0.2.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_core 0.3.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "amethyst_renderer 0.8.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -547,7 +547,7 @@ dependencies = [
  "mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -641,7 +641,7 @@ dependencies = [
  "cgmath 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -832,7 +832,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -992,7 +992,7 @@ dependencies = [
  "derivative 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "draw_state 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1022,7 +1022,7 @@ dependencies = [
  "gfx 0.17.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_core 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "ordered-float 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ordered-float 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusttype 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "twox-hash 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1138,8 +1138,8 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "gltf-derive 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1217,8 +1217,8 @@ dependencies = [
  "derive-new 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "partial_function 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs-derive 0.2.1 (git+https://github.com/jojolepro/specs?branch=derive)",
  "winit 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1483,7 +1483,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1685,7 +1685,7 @@ dependencies = [
 
 [[package]]
 name = "ordered-float"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1948,7 +1948,7 @@ dependencies = [
  "cgmath 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "collision 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rhusics-transform 0.3.0 (git+https://github.com/rustgd/rhusics)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1961,7 +1961,7 @@ dependencies = [
  "collision 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rhusics-core 0.5.0 (git+https://github.com/rustgd/rhusics)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shrev 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1997,7 +1997,7 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2104,15 +2104,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "serde"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.19 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2127,7 +2127,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "itoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "ryu 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2184,7 +2184,7 @@ name = "smallvec"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "unreachable 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2234,7 +2234,7 @@ dependencies = [
  "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "mopa 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shred-derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "shrev 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2850,7 +2850,7 @@ dependencies = [
 "checksum objc-foundation 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1add1b659e36c9607c7aab864a76c7a4c2760cd0cd2e120f3fb8b952c7e22bf9"
 "checksum objc_id 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c92d4ddb4bd7b50d730c215ff871754d0da6b2178849f8a2a2ab69712d0c073b"
 "checksum ogg 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "013b78ceb7fb82555a2f8a95d8e40866fe64a5d15b83c51b3e1fdd40cd903ed3"
-"checksum ordered-float 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7004d4db808c6db5a9f54ec5c85918ad01a1ef9b35bf4dfa1e2ccba28de0c1b4"
+"checksum ordered-float 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7eb5259643245d3f292c7a146b2df53bba24d7eab159410e648eb73dc164669d"
 "checksum ordered-float 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2f0015e9e8e28ee20c581cfbfe47c650cedeb9ed0721090e0b7ebb10b9cdbcc2"
 "checksum osmesa-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "88cfece6e95d2e717e0872a7f53a8684712ad13822a7979bc760b9c77ec0013b"
 "checksum owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "cdf84f41639e037b484f93433aa3897863b561ed65c6e59c7073d7c561710f37"
@@ -2901,8 +2901,8 @@ dependencies = [
 "checksum semver 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)" = "d4f410fedcf71af0345d7607d246e7ad15faaadd49d240ee3b24e5dc21a820ac"
 "checksum semver 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 "checksum semver-parser 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
-"checksum serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)" = "92ec94e2754699adddbbc4f555791bd3acc2a2f5574cba16c93a4a9cf4a04415"
-"checksum serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)" = "0fb622d85245add5327d4f08b2d24fd51fa5d35fe1bba19ee79a1f211e9ac0ff"
+"checksum serde 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)" = "84257ccd054dc351472528c8587b4de2dbf0dc0fe2e634030c1a90bfdacebaa9"
+"checksum serde_derive 1.0.79 (registry+https://github.com/rust-lang/crates.io-index)" = "31569d901045afbff7a9479f793177fe9259819aff10ab4f89ef69bbc5f567fe"
 "checksum serde_json 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)" = "59790990c5115d16027f00913e2e66de23a51f70422e549d2ad68c8c5f268f1c"
 "checksum shared_library 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "5a9e7e0f2bfae24d8a5b5a66c5b257a83c7412304311512a0c054cd5e619da11"
 "checksum shred 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d94a47a63681350e0e358f8223045015454c59e34589b930bc721be22602edd1"

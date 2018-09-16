@@ -12,7 +12,6 @@ Container(
             transform: (
                 id: "speed_bar",
                 y: 32.,
-                z: -1.,
                 width: 256.,
                 height: 32.,
                 anchor: BottomMiddle,
@@ -24,7 +23,6 @@ Container(
                 Image(
                     transform: (
                         id: "speed_cursor",
-                        z: -2.,
                         width: 32.,
                         height: 32.,
                         anchor: Middle,
@@ -41,7 +39,6 @@ Container(
             transform: (
                 id: "timer",
                 y: -80.,
-                z: -4.,
                 width: 500.,
                 height: 75.,
                 tab_order: -1,
@@ -61,7 +58,6 @@ Container(
                 id: "pb",
                 x: 200.,
                 y: -80.,
-                z: -4.,
                 width: 400.,
                 height: 60.,
                 tab_order: -1,
@@ -81,7 +77,6 @@ Container(
                 id: "wr",
                 x: -200.,
                 y: -80.,
-                z: -4.,
                 width: 400.,
                 height: 60.,
                 tab_order: -1,
@@ -101,7 +96,6 @@ Container(
                 id: "segment",
                 x: 80.,
                 y: 80.,
-                z: -4.,
                 width: 64.,
                 height: 64.,
                 tab_order: -1,
@@ -119,10 +113,9 @@ Container(
         Text(
             transform: (
                 id: "speed",
-                x: -80.,
+                x: -144.,
                 y: 80.,
-                z: -4.,
-                width: 128.,
+                width: 256.,
                 height: 64.,
                 tab_order: -1,
                 anchor: BottomRight,
