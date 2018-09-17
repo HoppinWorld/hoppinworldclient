@@ -661,14 +661,12 @@ pub fn accelerate_vector(delta_time: f32, input: Vector2<f32>, rel: Vector3<f32>
 /// Completely negates the velocity of a specific axis if an input is performed in the opposite direction.
 pub fn counter_impulse(input: Vector2<f32>, relative_velocity: Vector3<f32>) -> Vector3<f32> {
     let mut  o = relative_velocity;
-    if input.x < 0.0 && relative_velocity.x > 0.001 {
-        o = Vector3::new(0.0, relative_velocity.y, relative_velocity.z);
-    } else if input.x > 0.0 && relative_velocity.x < -0.001 {
+    if (input.x < 0.0 && relative_velocity.x > 0.001)
+        || (input.x > 0.0 && relative_velocity.x < -0.001) {
         o = Vector3::new(0.0, relative_velocity.y, relative_velocity.z);
     }
-    if input.y < 0.0 && relative_velocity.z > 0.001 {
-        o = Vector3::new(relative_velocity.x, relative_velocity.y, 0.0);
-    } else if input.y > 0.0 && relative_velocity.z < -0.001 {
+    if (input.y < 0.0 && relative_velocity.z < -0.001)
+        || (input.y > 0.0 && relative_velocity.z > 0.001) {
         o = Vector3::new(relative_velocity.x, relative_velocity.y, 0.0);
     }
     return o;
