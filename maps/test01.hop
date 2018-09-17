@@ -1,0 +1,14 @@
+MapInfo(
+	id: "6825e242-c996-4a60-ba02-97d3b3d509b2",
+    name: "TestMap 01",
+    mapper: "Jojolepro",
+    categories: [
+    	Downhill,
+    	Speed,
+    ],
+    difficulty: Easy,
+    tags: [
+        "test",
+        "first",
+    ],
+)

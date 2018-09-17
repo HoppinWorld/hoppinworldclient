@@ -16,6 +16,8 @@ winit = "0.17.0"
 partial_function = "0.4.0"
 derive-new = "0.5"
 specs-derive = { git = "https://github.com/jojolepro/specs", branch = "derive" }
+uuid = { version = "0.7.1", features = ["v4", "serde"] }
+ron = "0.4"
 
 #[patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }

@@ -12,6 +12,8 @@ extern crate partial_function;
 extern crate derive_new;
 #[macro_use]
 extern crate specs_derive;
+extern crate uuid;
+extern crate ron;
 
 use amethyst::core::timing::duration_to_secs;
 use amethyst::assets::{PrefabLoader, PrefabLoaderSystem, RonFormat, AssetPrefab, ProgressCounter, PrefabData, AssetStorage, Handle};
@@ -33,7 +35,7 @@ use amethyst::prelude::*;
 use amethyst::renderer::*;
 use amethyst::utils::scene::BasicScenePrefab;
 use amethyst::Error;
-use amethyst_gltf::{GltfSceneAsset, GltfSceneFormat, GltfSceneLoaderSystem};
+use amethyst_gltf::*;
 
 use amethyst::core::cgmath::{Matrix3, One, Point3, Quaternion, Vector3, Zero, Deg, Euler, InnerSpace, Rotation, EuclideanSpace, Rotation3, Vector2, SquareMatrix, Basis3};
 use amethyst_rhusics::collision::primitive::{Cuboid, Primitive3, ConvexPolyhedron, Cylinder};
@@ -49,7 +51,7 @@ use amethyst_rhusics::rhusics_ecs::{WithPhysics,PhysicalEntityParts};
 use amethyst_rhusics::{time_sync, DefaultPhysicsBundle3};
 use std::marker::PhantomData;
 use winit::DeviceEvent;
-
+use uuid::Uuid;
 use amethyst_extra::*;
 use partial_function::*;
 
@@ -89,6 +91,7 @@ pub enum ObjectType {
     EndZone,
     KillZone,
     Player,
+    SegmentZone(u8),
 }
 
 impl Default for ObjectType {
@@ -725,6 +728,33 @@ impl RelativeTimer {
     }
 }
 
+pub struct RuntimeProgress {
+    pub current_segment: u8,
+    pub segment_count: u8,
+    pub segment_times: Vec<f32>,
+}
+
+impl Default for RuntimeProgress {
+    fn default() -> Self {
+        RuntimeProgress {
+            current_segment: 1u8,
+            segment_count: 0u8,
+            segment_times: vec![],
+        }
+    }
+}
+
+impl RuntimeProgress {
+    pub fn new(segment_count: u8) -> Self {
+        RuntimeProgress {
+            current_segment: 1u8,
+            segment_count,
+            // +1 to take into account last segment to end zone
+            segment_times: vec![0.0; (segment_count + 1) as usize],
+        }
+    }
+}
+
 pub struct RelativeTimerSystem;
 
 impl<'a> System<'a> for RelativeTimerSystem {
@@ -755,9 +785,10 @@ impl<'a> System<'a> for ContactSystem {
         ReadStorage<'a, BhopMovement3D>,
         WriteStorage<'a, NextFrame<Velocity3<f32>>>,
         Write<'a, EventChannel<CustomStateEvent>>,
+        Write<'a, RuntimeProgress>,
 	);
 
-	fn run(&mut self, (entities, contacts, mut timer, time, object_types, players, bhop_movements, mut velocities, mut state_eventchannel): Self::SystemData) {
+	fn run(&mut self, (entities, contacts, mut timer, time, object_types, players, bhop_movements, mut velocities, mut state_eventchannel, mut runtime_progress): Self::SystemData) {
 		for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
 			//info!("Collision: {:?}",contact);
 			let type1 = object_types.get(contact.bodies.0);
@@ -802,11 +833,20 @@ impl<'a> System<'a> for ContactSystem {
 				ObjectType::EndZone => {
 					timer.stop();
 					info!("Finished! time: {:?}", timer.duration());
+                    let id = runtime_progress.segment_count as usize;
+                    runtime_progress.segment_times[id] = timer.duration() as f32;
                     state_eventchannel.single_write(CustomStateEvent::MapFinished);
 				},
 				ObjectType::KillZone => {
 					info!("you are ded!");
 				},
+                ObjectType::SegmentZone(id) => {
+                    if *id > runtime_progress.current_segment {
+                        runtime_progress.segment_times[(*id - 1) as usize] = timer.duration() as f32;
+                        runtime_progress.current_segment = *id;
+                    }
+                    info!("segment done");
+                },
 				_ => {},
 			}
         }
@@ -825,6 +865,70 @@ pub struct Stats {
 
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum MapCategory {
+    Speed,
+    Technical,
+    Gimmick,
+    Uphill,
+    Downhill,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum MapDifficulty {
+    Easy,
+    Normal,
+    Hard,
+    Insane,
+    Extreme,
+    Master,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MapInfo {
+    pub id: Uuid,
+    pub name: String,
+    pub mapper: String,
+    pub categories: Vec<MapCategory>,
+    pub difficulty: MapDifficulty,
+    pub tags: Vec<String>,
+}
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize, new)]
+pub struct MapInfoCache {
+    /// File name -> MapInfo
+    pub maps: Vec<(String,MapInfo)>,
+}
+
+#[derive(Debug, Clone, new)]
+pub struct CurrentMap {
+    pub map: (String,MapInfo),
+}
+
+pub fn get_all_maps(base_path: &str) -> MapInfoCache {
+    let maps_path = format!("{}{}maps{}", base_path, std::path::MAIN_SEPARATOR,std::path::MAIN_SEPARATOR);
+
+    let map_info_vec = std::fs::read_dir(&maps_path)
+        .expect(&*format!("Failed to read maps directory {}.",&maps_path))
+        .filter(|e| e.as_ref().unwrap().file_type().unwrap().is_file())
+        .map(|e| e.unwrap().path())
+        .filter(|p| p.extension().unwrap_or(std::ffi::OsStr::new("")).to_str().unwrap() == "hop")
+        .map(|e| {
+            
+            let info_file_data = std::fs::read_to_string(e.to_str().unwrap()).unwrap();
+            let info = ron::de::from_str(&info_file_data).expect("Failed to deserialize info map file.");
+
+            Some((e.file_stem().unwrap().to_str().unwrap().to_string(), info))
+        })
+        .flatten()
+        .collect::<Vec<_>>();
+    MapInfoCache::new(map_info_vec)
+}
+
+pub fn gltf_path_from_map(base_path: &str, map_name: &str) -> String {
+    format!("{}{}maps{}{}.glb", base_path, std::path::MAIN_SEPARATOR,std::path::MAIN_SEPARATOR, map_name)
+}
+
 /// Very game dependent.
 pub struct UiUpdaterSystem;
 
@@ -837,9 +941,10 @@ impl<'a> System<'a> for UiUpdaterSystem {
         ReadStorage<'a, UiTransform>,
         WriteStorage<'a, UiText>,
         ReadStorage<'a, Player>,
+        Read<'a, RuntimeProgress>,
     );
 
-    fn run(&mut self, (timer, stat, velocities, jumps, ui_transforms, mut texts, players): Self::SystemData) {
+    fn run(&mut self, (timer, stat, velocities, jumps, ui_transforms, mut texts, players, runtime_progress): Self::SystemData) {
         for (ui_transform, mut text) in (&ui_transforms, &mut texts).join() {
             match &*ui_transform.id {
                 "timer" => {
@@ -852,7 +957,7 @@ impl<'a> System<'a> for UiUpdaterSystem {
 
                 },
                 "segment" => {
-
+                    text.text = runtime_progress.current_segment.to_string();
                 },
                 "speed" => {
                     for (_, velocity) in (&players, &velocities).join() {
@@ -882,6 +987,7 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for InitState {
     fn on_start(&mut self, data: StateData<GameData>) {
         data.world.register::<ObjectType>();
         data.world.register::<Removal<RemovalId>>();
+        data.world.add_resource(get_all_maps(&get_working_dir()));
     }
 
     fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
@@ -947,6 +1053,26 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapSelectState {
             creator.create("assets/base/prefabs/map_select_ui.ron", ())
         });
         data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::MapSelectUi)).expect("Failed to insert removalid to ui_root for map select state.");
+
+        let font = data.world.read_resource::<AssetLoader>().load("font/arial.ttf", FontFormat::Ttf, (), &mut data.world.write_resource(), &mut data.world.write_resource(), &data.world.read_resource()).expect("Failed to load font");
+        let maps = data.world.read_resource::<MapInfoCache>().maps.clone();
+        let mut accum = 0;
+        for (internal, info) in maps {
+            info!("adding map!");
+            let entity = UiButtonBuilder::new(
+                format!("map_select_{}",internal),
+                info.name.clone())
+            .with_font(font.clone())
+            .with_text_color([0.2,0.2,0.2,1.0])
+            .with_font_size(30.0)
+            .with_size(512.0,200.0)
+            .with_layer(8.0)
+            .with_position(0.0, -300.0 - 100.0 * accum as f32)
+            .with_anchor(Anchor::TopMiddle)
+            .build_from_world(data.world);
+            data.world.write_storage::<Removal<RemovalId>>().insert(entity, Removal::new(RemovalId::MapSelectUi)).unwrap();
+            accum = accum + 1;
+        }
     }
 
     fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a,'b> {
@@ -955,31 +1081,36 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapSelectState {
     }
 
     fn handle_event(&mut self, data: StateData<GameData>, event: StateEvent<CustomStateEvent>) -> CustomTrans<'a, 'b> {
+        let mut change_map = None;
         match event {
             StateEvent::Ui(UiEvent{event_type: UiEventType::Click, target: entity}) => {
                 if let Some(ui_transform) = data.world.read_storage::<UiTransform>().get(entity) {
                     match &*ui_transform.id {
-                        "map1_test" => {
-                            Trans::Switch(Box::new(MapLoadState::default()))
-                        },
                         "back_button" => {
-                            Trans::Switch(Box::new(MainMenuState::default()))
+                            return Trans::Switch(Box::new(MainMenuState::default()));
                         },
-                        _ => Trans::None
+                        id => {
+                            if id.starts_with("map_select_") {
+                                let map_name = &id[11..];
+                                change_map = Some(data.world.read_resource::<MapInfoCache>().maps.iter().filter(|t| t.0 == map_name).next().unwrap().clone());
+                            }
+                        }
                     }
-                } else {
-                    Trans::None
                 }
             },
             StateEvent::Window(ev) => {
                 if is_key_down(&ev, VirtualKeyCode::Escape) {
-                    Trans::Switch(Box::new(MainMenuState::default()))
-                } else {
-                    Trans::None
+                    return Trans::Switch(Box::new(MainMenuState::default()));
                 }
             }
-            _ => Trans::None,
+            _ => {},
         }
+
+        if let Some(row) = change_map {
+            data.world.add_resource(CurrentMap::new(row));
+            return Trans::Switch(Box::new(MapLoadState::default()));
+        }
+        Trans::None
     }
 
     fn on_stop(&mut self, data: StateData<GameData>) {
@@ -1105,12 +1236,13 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapLoadState {
 
         let mut pg = ProgressCounter::new();
 
+        let name = data.world.read_resource::<CurrentMap>().map.0.clone();
         let scene_handle = data.world.exec(
-            |loader: PrefabLoader<HoppinMapPrefabData>| {
+            |loader: PrefabLoader<GltfPrefab>| {
                 loader.load(
-                    "assets/base/maps/test01.hop",
-                    RonFormat,
-                    (),
+                    gltf_path_from_map(&get_working_dir(),&name),
+                    GltfSceneFormat,
+                    GltfSceneOptions::default(),
                     &mut pg,
                 )
             }
@@ -1183,19 +1315,12 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapLoadState {
             .with(Removal::new(RemovalId::Scene))
         	.build();
 
-        /*let font = data.world.read_resource::<AssetLoader>().load("font/arial.ttf", FontFormat::Ttf, (), &mut data.world.write_resource(), &mut data.world.write_resource(), &data.world.read_resource()).expect("Failed to load font");
-        data.world
-            .create_entity()
-            .with(UiTransform::new("timer_text".to_string(), Anchor::TopMiddle, 0.0, 500.0, 0.0, 512.0, 256.0, -1))
-            .with(UiText::new(font, "timer here".to_string(), [1.0,1.0,1.0,1.0], 30.0))
-            .with(RelativeTimer::default())
-            .build();*/
-
         let ui_root = data.world.exec(|mut creator: UiCreator| {
             creator.create("assets/base/prefabs/gameplay_ui.ron", ())
         });
         data.world.write_storage::<Removal<RemovalId>>().insert(ui_root, Removal::new(RemovalId::GameplayUi)).expect("Failed to insert removalid to ui_root for gameplay state.");
 
+        data.world.add_resource(RuntimeProgress::default());
         MyPhysicalEntityParts::setup(&mut data.world.res)
     }
 
@@ -1216,6 +1341,8 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapLoadState {
 
     		if !entity_sizes.is_empty() {
     			// The loading is done, now we add the colliders.
+
+                let mut max_segment = 0;
     			self.init_done = true;
     			{
     				let mut collider_storage = data.world.write_storage::<ObjectType>();
@@ -1226,12 +1353,20 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapLoadState {
 	    					(ObjectType::EndZone,CollisionStrategy::CollisionOnly)
 	    				} else if name.starts_with("KillZone") {
 	    					(ObjectType::KillZone,CollisionStrategy::CollisionOnly)
-	    				} else {
+	    				} else if name.starts_with("SegmentZone") {
+                            let id_str = &name[11..];
+                            let id = id_str.to_string().parse::<u8>().unwrap(); // TODO error handling for maps
+                            if id > max_segment {
+                                max_segment = id;
+                            }
+                            (ObjectType::SegmentZone(id),CollisionStrategy::CollisionOnly)
+                        } else {
 	    					(ObjectType::Scene,CollisionStrategy::FullResolution)
 	    				};
 	    				collider_storage.insert(*entity, obj_type).expect("Failed to add ObjectType to map mesh");
 	    			}
     			}
+                data.world.add_resource(RuntimeProgress::new(max_segment));
     			{
 	    			let mut physical_parts = MyPhysicalEntityParts::fetch(&mut data.world.res);
 	    			for (entity, size, mesh, name) in entity_sizes {
@@ -1241,7 +1376,9 @@ impl<'a, 'b> State<GameData<'a,'b>, CustomStateEvent> for MapLoadState {
 	    					(ObjectType::EndZone,CollisionStrategy::CollisionOnly)
 	    				} else if name.starts_with("KillZone") {
 	    					(ObjectType::KillZone,CollisionStrategy::CollisionOnly)
-	    				} else {
+	    				} else if name.starts_with("SegmentZone") {
+                            (ObjectType::KillZone,CollisionStrategy::CollisionOnly)
+                        } else {
 	    					(ObjectType::Scene,CollisionStrategy::FullResolution)
 	    				};
 
