@@ -263,6 +263,7 @@ pub struct ContactSystem {
 impl<'a> System<'a> for ContactSystem {
     type SystemData = (
         Entities<'a>,
+        ReadStorage<'a, Transform>,
         Read<'a, EventChannel<ContactEvent<Entity, Point3<f32>>>>,
         Write<'a, RelativeTimer>,
         Read<'a, Time>,
@@ -270,6 +271,7 @@ impl<'a> System<'a> for ContactSystem {
         ReadStorage<'a, Player>,
         ReadStorage<'a, BhopMovement3D>,
         WriteStorage<'a, NextFrame<Velocity3<f32>>>,
+        WriteStorage<'a, NextFrame<BodyPose3<f32>>>,
         Write<'a, EventChannel<CustomStateEvent>>,
         Write<'a, RuntimeProgress>,
     );
@@ -278,6 +280,7 @@ impl<'a> System<'a> for ContactSystem {
         &mut self,
         (
             entities,
+            transforms,
             contacts,
             mut timer,
             time,
@@ -285,6 +288,7 @@ impl<'a> System<'a> for ContactSystem {
             players,
             bhop_movements,
             mut velocities,
+            mut body_poses,
             mut state_eventchannel,
             mut runtime_progress,
         ): Self::SystemData,
@@ -345,6 +349,17 @@ impl<'a> System<'a> for ContactSystem {
                 }
                 ObjectType::KillZone => {
                     info!("you are ded!");
+                    let seg = runtime_progress.current_segment;
+                    if seg == 1 {
+                        // To start zone
+                        let pos = (&transforms, &object_types).join().filter(|(_,obj)| **obj == ObjectType::StartZone).map(|(tr,_)| tr.translation).next().unwrap();
+                        let mut body_pose = (&players, &mut body_poses).join().map(|t| t.1).next().unwrap();
+                        let pos = Point3::new(pos.x, pos.y, pos.z);
+                        body_pose.value.set_position(pos);
+                    } else {
+                        // To last checkpoint
+                        unimplemented!();
+                    }
                 }
                 ObjectType::SegmentZone(id) => {
                     if *id > runtime_progress.current_segment {
