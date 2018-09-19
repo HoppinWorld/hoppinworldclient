@@ -49,7 +49,7 @@ use amethyst_rhusics::collision::{Aabb3, Ray3};
 use amethyst_rhusics::rhusics_core::physics3d::{Mass3, Velocity3};
 use amethyst_rhusics::rhusics_core::{
     Collider, CollisionMode, CollisionShape, CollisionStrategy, ContactEvent, ForceAccumulator,
-    Material, NextFrame, PhysicalEntity, Pose,
+    Material, NextFrame, PhysicalEntity, Pose, WorldParameters,
 };
 use amethyst_rhusics::rhusics_ecs::physics3d::{BodyPose3, DynamicBoundingVolumeTree3};
 use amethyst_rhusics::rhusics_ecs::{PhysicalEntityParts, WithPhysics};
@@ -102,6 +102,7 @@ pub enum ObjectType {
     EndZone,
     KillZone,
     Player,
+    Dynamic,
     SegmentZone(u8),
 }
 
@@ -113,12 +114,7 @@ impl Default for ObjectType {
 
 impl Collider for ObjectType {
     fn should_generate_contacts(&self, other: &ObjectType) -> bool {
-        let _ret = (*self == ObjectType::Player && *other == ObjectType::Scene)
-            || (*self == ObjectType::Scene && *other == ObjectType::Player);
-        //info!("should_generate_contacts {:?} -> {:?} ret {}", *self, *other, ret);
-        true
-        //other != self
-        //true
+        *self == ObjectType::Player || *other == ObjectType::Player || *self == ObjectType::Dynamic || *other == ObjectType::Dynamic
     }
 }
 
@@ -508,6 +504,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for InitState {
         data.world.register::<ObjectType>();
         data.world.register::<Removal<RemovalId>>();
         data.world.add_resource(get_all_maps(&get_working_dir()));
+
+        let mut world_param = WorldParameters::new(-Vector3::<f32>::unit_y());
+        world_param = world_param.with_damping(1.0);
+        data.world.add_resource(world_param);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -873,9 +873,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                     Quaternion::<f32>::one(),
                 ),
                 Velocity3::default(),
-                PhysicalEntity::new(Material::new(1.0, 0.05)),
+                PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
                 Mass3::new(1.0),
-            ).with(tr)
+            )
+            .with(tr)
             .with(ForceAccumulator::<Vector3<f32>, Vector3<f32>>::new())
             .with(Removal::new(RemovalId::Scene))
             .build();
@@ -1164,7 +1165,8 @@ fn main() -> amethyst::Result<()> {
             ),
             "bhop_movement",
             &["free_rotation", "jump", "ground_friction", "ground_checker"],
-        ).with(GravitySystem, "gravity", &[])
+        )
+        .with(GravitySystem, "gravity", &[])
         .with_bundle(TransformBundle::new().with_dep(&[]))?
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])

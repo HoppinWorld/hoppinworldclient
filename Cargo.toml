@@ -19,10 +19,12 @@ specs-derive = { git = "https://github.com/jojolepro/specs", branch = "derive" }
 uuid = { version = "0.7.1", features = ["v4", "serde"] }
 ron = "0.4"
 
-#[patch.crates-io]
+[patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }
-#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
 
-[replace]
-"amethyst:0.8.0" = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
-"amethyst_core:0.3.0" = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+#[replace]
+#"amethyst:0.8.0" = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+#"amethyst_core:0.3.0" = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
