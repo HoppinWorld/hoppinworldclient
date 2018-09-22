@@ -130,7 +130,7 @@ struct Gravity {
 impl Default for Gravity {
     fn default() -> Self {
         Gravity {
-            acceleration: Vector3::new(0.0, -1.0, 0.0),
+            acceleration: Vector3::new(0.0, -2.0, 0.0),
         }
     }
 }
@@ -973,7 +973,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             .with(ObjectType::Player)
             //.with(movement)
             //.with(ground_friction)
-            .with(Jump::new(true, true, 50.0, true))
+            .with(Jump::new(true, true, 1.0, true))
             .with(Player)
             .with_dynamic_physical_entity(
                 Shape::new_simple_with_type(
@@ -1000,7 +1000,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
 
         let mut tr = Transform::default();
         // TODO add conf ability to this
-        tr.translation = [0.0, 0.35, 0.0].into();
+        tr.translation = [0.0, 0.25, 0.0].into();
         data.world
             .create_entity()
             .with(tr)
