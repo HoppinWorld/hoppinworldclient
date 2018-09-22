@@ -1,0 +1,36 @@
+PlayerSettings(
+    grounded: Grounded(
+        ground: false,
+        since: 0.0,
+        distance_check: 0.5,
+    ),
+    movement: BhopMovement3D(
+        absolute: false,
+        absolute_axis: false,
+        counter_impulse: false,
+        accelerate_ground: 20.0,
+        accelerate_air: 20.0,
+        max_velocity_ground: 2.0,
+        max_velocity_air: 0.5,
+        allow_projection_acceleration: true,
+    ),
+    ground_friction: GroundFriction3D(
+        friction: 2.0,
+        friction_mode: Percent,
+        ground_time_before_apply: 0.15,
+    ),
+    shape: Cylinder(Cylinder(
+        half_height: 0.5,
+        radius: 0.2,
+    )),
+    physical_entity: PhysicalEntity(
+        material: Material(
+            density: 1.0,
+            restitution: 0.05,
+        ),
+        gravity_scale: 1.0,
+        damping: Some(1.0),
+        active: true,
+    ),
+    mass: 1.0,
+)

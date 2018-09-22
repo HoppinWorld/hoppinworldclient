@@ -1,1 +1,1 @@
-( dimensions: None, max_dimensions: None, min_dimensions: None, fullscreen: false, multisampling: 8, title: "Hoppin World", visibility: true, vsync: true, )
+( dimensions: None, max_dimensions: None, min_dimensions: None, fullscreen: false, multisampling: 4, title: "Hoppin World", visibility: true, vsync: true, )

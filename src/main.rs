@@ -15,6 +15,8 @@ extern crate specs_derive;
 extern crate ron;
 extern crate uuid;
 
+use amethyst::assets::Prefab;
+use amethyst::assets::RonFormat;
 use amethyst::assets::{
     AssetPrefab, PrefabData, PrefabLoader, PrefabLoaderSystem, ProgressCounter,
 };
@@ -150,38 +152,114 @@ impl<'a> System<'a> for GravitySystem {
     }
 }
 
+/*
+let player_entity = data
+            .world
+            .create_entity()
+            .with(FlyControlTag)
+            .with(Grounded::new(0.5))
+            .with(ObjectType::Player)
+            .with(movement)
+            .with(ground_friction)
+            .with(Jump::new(true, true, 50.0, true))
+            .with(Player)
+            .with_dynamic_physical_entity(
+                Shape::new_simple_with_type(
+                    CollisionStrategy::FullResolution,
+                    CollisionMode::Discrete,
+                    Cylinder::new(0.5, 0.2).into(),
+                    ObjectType::Player,
+                ),
+                BodyPose3::new(
+                    Point3::new(tr.translation.x, tr.translation.y, tr.translation.z),
+                    Quaternion::<f32>::one(),
+                ),
+                Velocity3::default(),
+                PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
+                Mass3::new(1.0),
+            )
+            .with(tr)
+            .with(ForceAccumulator::<Vector3<f32>, Vector3<f32>>::new())
+            .with(Removal::new(RemovalId::Scene))
+            .build();
+*/
 
-#[derive(Deserialize, Serialize)]
-pub struct HoppinMapPrefabData {
-    name: String,
-    map: AssetPrefab<GltfSceneAsset, GltfSceneFormat>,
+#[derive(Debug, new, Clone, Serialize, Deserialize)]
+pub struct PlayerSettings {
+    pub grounded: Grounded,
+    pub movement: BhopMovement3D,
+    pub ground_friction: GroundFriction3D,
+    pub shape: Primitive3<f32>,
+    pub physical_entity: PhysicalEntity<f32>,
+    pub mass: f32,
 }
 
-impl<'a> PrefabData<'a> for HoppinMapPrefabData {
-    type SystemData =
-        (<AssetPrefab<GltfSceneAsset, GltfSceneFormat> as PrefabData<'a>>::SystemData,);
+/*impl Default for PlayerSettings {
+    fn default() -> Self {
+        PlayerSettings {
+            grounded: Grounded::default(),
+            movement: BhopMovement3D::default(),
+            ground_friction: GroundFriction3D::default(),
+            shape: Cylinder::new(0.5, 0.2).into(),
+            physical_entity: PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
+            mass: Mass3::new(1.0),
+        }
+    }
+}*/
+
+#[derive(Deserialize, Serialize)]
+pub struct PlayerPrefabData {
+    grounded: Grounded,
+    movement: BhopMovement3D,
+    ground_friction: GroundFriction3D,
+    shape: Primitive3<f32>,
+    physical_entity: PhysicalEntity<f32>,
+    mass: Mass3<f32>,
+}
+
+/*impl<'a> PrefabData<'a> for PlayerPrefabData {
+    type SystemData = (
+        <WriteStorage<'a, Grounded> as PrefabData<'a>>::SystemData,
+        <WriteStorage<'a, BhopMovement3D> as PrefabData<'a>>::SystemData,
+        <WriteStorage<'a, GroundFriction3D> as PrefabData<'a>>::SystemData,
+        <Write<'a, PlayerSettings> as PrefabData<'a>>::SystemData,
+    );
     type Result = ();
 
     fn load_prefab(
         &self,
         entity: Entity,
         system_data: &mut Self::SystemData,
-        entities: &[Entity],
+        _entities: &[Entity],
     ) -> Result<(), ECSError> {
-        let (ref mut gltfs,) = system_data;
-        self.map.load_prefab(entity, gltfs, entities)?;
+        let (ref mut groundeds, ref mut movements, ref mut frictions, ref mut player_settings) = system_data;
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+        println!("STUFF GOING ON!");
+
+        groundeds.insert(entity, self.grounded.clone())?;
+        movements.insert(entity, self.movement.clone())?;
+        frictions.insert(entity, self.ground_friction.clone())?;
+        player_settings.shape = self.shape.clone();
+        player_settings.physical_entity = self.physical_entity.clone();
+        player_settings.mass = self.mass.clone();
         Ok(())
     }
-
-    fn trigger_sub_loading(
-        &mut self,
-        progress: &mut ProgressCounter,
-        system_data: &mut Self::SystemData,
-    ) -> Result<bool, ECSError> {
-        let (ref mut gltfs,) = system_data;
-        self.map.trigger_sub_loading(progress, gltfs)
-    }
-}
+}*/
 
 
 /// Calculates in relative time using the internal engine clock.
@@ -830,6 +908,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
 #[derive(Default)]
 struct MapLoadState {
     load_progress: Option<ProgressCounter>,
+    player_entity: Option<Entity>,
     init_done: bool,
 }
 
@@ -841,6 +920,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
         let mut pg = ProgressCounter::new();
 
         let name = data.world.read_resource::<CurrentMap>().map.0.clone();
+
         let scene_handle = data.world.exec(|loader: PrefabLoader<GltfPrefab>| {
             loader.load(
                 gltf_path_from_map(&get_working_dir(), &name),
@@ -849,6 +929,19 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 &mut pg,
             )
         });
+
+        /*let player_data_handle = data.world.exec(|loader: PrefabLoader<PlayerPrefabData>| {
+            loader.load(
+                "assets/base/config/player.ron",
+                RonFormat,
+                (),
+                &mut pg,
+            )
+        });*/
+
+        let player_settings_data = std::fs::read_to_string(format!("{}/assets/base/config/player.ron",get_working_dir())).expect("Failed to read player.ron settings file.");
+        let player_settings: PlayerSettings = ron::de::from_str(&player_settings_data).expect("Failed to load player settings from file.");
+
         self.load_progress = Some(pg);
 
         let scene_root = data.world.create_entity().with(scene_handle).build();
@@ -857,8 +950,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             .insert(scene_root, Removal::new(RemovalId::Scene))
             .expect("Failed to insert removalid to scene for gameplay state.");
 
-        data.world
-            .add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
+        //data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
+        data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
+
 
         let mut tr = Transform::default();
         tr.translation = [0.0, 5.0, 0.0].into();
@@ -866,21 +960,27 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
         let movement = BhopMovement3D::new(false, 20.0, 20.0, 2.0, 0.5, true);
         let ground_friction = GroundFriction3D::new(2.0, FrictionMode::Percent, 0.15);
 
+        //let player_settings = data.world.read_resource::<PlayerSettings>().physical_entity.clone();
+
         let player_entity = data
             .world
             .create_entity()
+            .with(player_settings.movement) 
+            .with(player_settings.grounded)
+            .with(player_settings.ground_friction)
             .with(FlyControlTag)
-            .with(Grounded::new(0.5))
+            //.with(Grounded::new(0.5))
             .with(ObjectType::Player)
-            .with(movement)
-            .with(ground_friction)
+            //.with(movement)
+            //.with(ground_friction)
             .with(Jump::new(true, true, 50.0, true))
             .with(Player)
             .with_dynamic_physical_entity(
                 Shape::new_simple_with_type(
                     CollisionStrategy::FullResolution,
                     CollisionMode::Discrete,
-                    Cylinder::new(0.5, 0.2).into(),
+                    //Cylinder::new(0.5, 0.2).into(),
+                    player_settings.shape.clone(),
                     ObjectType::Player,
                 ),
                 BodyPose3::new(
@@ -888,8 +988,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                     Quaternion::<f32>::one(),
                 ),
                 Velocity3::default(),
-                PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
-                Mass3::new(1.0),
+                //PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
+                player_settings.physical_entity.clone(),
+                Mass3::new(player_settings.mass),
+                //player_settings.mass.clone(),
             )
             .with(tr)
             .with(ForceAccumulator::<Vector3<f32>, Vector3<f32>>::new())
@@ -905,8 +1007,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             .with(RotationControl::default())
             .with(Camera::standard_3d(1920.0, 1080.0))
             .with(Parent {
-                entity: player_entity,
+                entity: player_entity.clone(),
             }).build();
+
+        self.player_entity = Some(player_entity);
 
         data.world.add_resource(AmbientColor(Rgba::from([0.1; 3])));
         let mut tr = Transform::default();
@@ -969,11 +1073,15 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 // The loading is done, now we add the colliders.
 
                 let mut max_segment = 0;
+                let mut spawn_position = Vector3::new(0.0, 0.0, 0.0);
+                let mut spawn_rotation = Quaternion::one();
                 self.init_done = true;
                 {
                     let mut collider_storage = data.world.write_storage::<ObjectType>();
-                    for (entity, _, _, name) in &entity_sizes {
+                    for (entity, transform, _, name) in &entity_sizes {
                         let (obj_type, _coll_strat) = if name == "StartZone" {
+                            spawn_position = transform.translation.clone();
+                            spawn_rotation = transform.rotation.clone();
                             (ObjectType::StartZone, CollisionStrategy::CollisionOnly)
                         } else if name == "EndZone" {
                             (ObjectType::EndZone, CollisionStrategy::CollisionOnly)
@@ -997,6 +1105,14 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                             .expect("Failed to add ObjectType to map mesh");
                     }
                 }
+
+                {
+                    for (mut body_pose, _) in (&mut data.world.write_storage::<NextFrame<BodyPose3<f32>>>(), &data.world.read_storage::<Player>()).join() {
+                        body_pose.value.set_position(Point3::new(spawn_position.x, spawn_position.y, spawn_position.z));
+                        body_pose.value.set_rotation(spawn_rotation);
+                    }
+                }
+
                 data.world.add_resource(RuntimeProgress::new(max_segment));
                 {
                     let mut physical_parts = MyPhysicalEntityParts::fetch(&data.world.res);
@@ -1153,14 +1269,16 @@ fn main() -> amethyst::Result<()> {
             PrefabLoaderSystem::<ScenePrefab>::default(),
             "map_loader",
             &[],
-        ).with(
-            PrefabLoaderSystem::<HoppinMapPrefabData>::default(),
-            "scene_loader",
+        )
+        /*.with(
+            PrefabLoaderSystem::<PlayerPrefabData>::default(),
+            "player_loader",
             &[],
-        ).with(
+        )*/
+        .with(
             GltfSceneLoaderSystem::default(),
             "gltf_loader",
-            &["scene_loader", "map_loader"],
+            &["map_loader"],
         ).with(
             FPSRotationRhusicsSystem::<String, String>::new(0.3, 0.3),
             "free_rotation",
