@@ -23,11 +23,11 @@ cache:
 before_script:
 - export PATH=$PATH:/home/travis/.cargo/bin
 script: |
-  cargo build -- release &&
+  cargo build --release &&
   mkdir export &&
-  cp -r assets/ export/
-  cp -r maps/ export/
-  cp target/release/hoppinworld export/
+  cp -r assets/ export/ &&
+  cp -r maps/ export/ &&
+  cp target/release/hoppinworld export/ &&
   zip -r hoppinworld.zip export/*
 deploy:
   provider: releases

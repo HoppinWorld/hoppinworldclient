@@ -41,11 +41,14 @@ build: false
 
 test_script:
   - cargo build --release
-
-after_build:
   - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\assets\*
   - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\maps\*
   - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\target\release\hoppinworld
+
+#after_build:
+#  - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\assets\*
+#  - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\maps\*
+#  - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\target\release\hoppinworld
 
 artifacts:
   - path: hoppinworld_win.zip
