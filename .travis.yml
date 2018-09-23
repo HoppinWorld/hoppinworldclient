@@ -1,42 +1,39 @@
-# Set up the Rust toolchain.
 language: rust
 rust:
-  - nightly
-
-# Build the Bors staging and trying branches, plus PRs to master, and
-# the latest release branch.
+- nightly
 branches:
   only:
-    - staging
-    - trying
-    - master
-    - /release-.*/
-
-# Test on Linux - OSX builds take in excess of 5 hours to start as of 2017-09-19.
+  - staging
+  - trying
+  - master
+  - "/release-.*/"
 os:
-  - linux
-  - osx
-
-# Install ALSA development libraries before compiling on Linux.
+- linux
+- osx
 addons:
   apt:
     packages:
-      - libasound2-dev
-      - libsdl2-dev
-
-# Install SDL development libraries from homebrew on macOS
+    - libasound2-dev
+    - libsdl2-dev
 before_install:
- - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then brew update && brew install sdl2; fi"
-
-# This build doesn't require sudo, but turning it on gives us more disk space
-# We need the extra space as we keep running out.
+- if [ ${TRAVIS_OS_NAME} = 'osx' ]; then brew update && brew install sdl2; fi
 sudo: required
-
-# Force third-party crates to persist from previous builds and update only when
-# needed.
-cache: 
-  - cargo
-
-# Allow binaries installed from Cargo.
+cache:
+- cargo
 before_script:
-  - export PATH=$PATH:/home/travis/.cargo/bin
+- export PATH=$PATH:/home/travis/.cargo/bin
+script: |
+  cargo build -- release &&
+  mkdir export &&
+  cp -r assets/ export/
+  cp -r maps/ export/
+  cp target/release/hoppinworld export/
+  zip -r hoppinworld.zip export/*
+deploy:
+  provider: releases
+  api_key:
+    secure: KBFd7uQz3/HDuW9yw81ukurtFISlY+Vcys1EHBmU16ZiGMfpcl96ZzuUwkFoUfgZhLDQQ4Cg21YJgaTwUtOJlUqmeznT7NCo/uYfbKHuWCEhaQKukXzxKMQreWdeEZs32O7BL02m0NSUnha9mn3fJYRH/TGxWSE+ZmZCqk40nBGtNJ9wMEvy8BcvUh4DJISgae9zgqbWJbl2G5gciYNR0mkOkMiRhQ2y6CK/M5JOW0auaKOPO3OVrUagSKvhmvL23KtjefjrSoAoS4l1Ar+0JdVEsfw9arUCLHyqRRybQDBTwAahDicytoA3UM0O9sVKH1cPjGGcW2Ulem7KB49YnRYeVyBOYV+PHmzQmgQYTwD9spPhXgxhklgmJkTqP3dxfDHDc9H7+ZV8Lk+0IXD1ZmjkoWM7kdwfYcM9r12XQ9PizofdTgajatAYGL7YDbssHjmG4fZXRmuIw9rcypb1X5BQn3fH0kLaO1omH2QEDh13wEHgem7ehp4TjX4o+sGdeCq4sEnjFnaIuJCzjAcZKxYPhJ6Q0KPhv7YHd+tdo1iH0Wnx0cEcemoVELHbsVniQBM++cKFt+IoeYugSFz0dYZGD8gsATN308YdQULYiPcUackhttZjx9cgDiAa0sftV3dQzj+U/kzLn+Q4WVGRPMbuAcVhm1cZV67H3K/uYA0=
+  file: hoppinworld.zip
+  skip_cleanup: true
+  on:
+    tags: true
