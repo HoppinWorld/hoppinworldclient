@@ -43,6 +43,8 @@ test_script:
   - cargo build --release
   - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\assets\*
   - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\maps\*
+  - dir %APPVEYOR_BUILD_FOLDER%
+  - dir %APPVEYOR_BUILD_FOLDER%\..\
   - 7z a hoppinworld_win.zip %APPVEYOR_BUILD_FOLDER%\target\release\hoppinworld
 
 #after_build:

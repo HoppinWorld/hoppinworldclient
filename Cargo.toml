@@ -14,15 +14,17 @@ amethyst_gltf = { git = "https://github.com/amethyst/amethyst", branch = "master
 amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
 #amethyst-rhusics = { path = "../amethyst-rhusicshoppinworld" }
 amethyst-rhusics = { git = "https://github.com/amethyst/amethyst-rhusics" }
-serde = "1.0"
-serde_derive = "1.0"
+serde = { version = "1", features = ["serde_derive"] }
 log = "0.4"
 winit = "0.17.0"
 partial_function = "0.4.0"
 derive-new = "0.5"
+derive_builder = "0.6"
 specs-derive = { git = "https://github.com/slide-rs/specs" }
 uuid = { version = "0.7.1", features = ["v4", "serde"] }
 ron = "0.4"
+
+hoppinworlddata = { git = "https://github.com/hoppinworld/data" }
 
 [patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }

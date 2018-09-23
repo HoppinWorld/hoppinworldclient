@@ -14,7 +14,12 @@ extern crate derive_new;
 extern crate specs_derive;
 extern crate ron;
 extern crate uuid;
+extern crate hoppinworlddata;
+#[macro_use]
+extern crate derive_builder;
 
+use std::collections::VecDeque;
+use hoppinworlddata::*;
 use amethyst::assets::Prefab;
 use amethyst::assets::RonFormat;
 use amethyst::assets::{
@@ -152,38 +157,6 @@ impl<'a> System<'a> for GravitySystem {
     }
 }
 
-/*
-let player_entity = data
-            .world
-            .create_entity()
-            .with(FlyControlTag)
-            .with(Grounded::new(0.5))
-            .with(ObjectType::Player)
-            .with(movement)
-            .with(ground_friction)
-            .with(Jump::new(true, true, 50.0, true))
-            .with(Player)
-            .with_dynamic_physical_entity(
-                Shape::new_simple_with_type(
-                    CollisionStrategy::FullResolution,
-                    CollisionMode::Discrete,
-                    Cylinder::new(0.5, 0.2).into(),
-                    ObjectType::Player,
-                ),
-                BodyPose3::new(
-                    Point3::new(tr.translation.x, tr.translation.y, tr.translation.z),
-                    Quaternion::<f32>::one(),
-                ),
-                Velocity3::default(),
-                PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
-                Mass3::new(1.0),
-            )
-            .with(tr)
-            .with(ForceAccumulator::<Vector3<f32>, Vector3<f32>>::new())
-            .with(Removal::new(RemovalId::Scene))
-            .build();
-*/
-
 #[derive(Debug, new, Clone, Serialize, Deserialize)]
 pub struct PlayerSettings {
     pub grounded: Grounded,
@@ -193,19 +166,6 @@ pub struct PlayerSettings {
     pub physical_entity: PhysicalEntity<f32>,
     pub mass: f32,
 }
-
-/*impl Default for PlayerSettings {
-    fn default() -> Self {
-        PlayerSettings {
-            grounded: Grounded::default(),
-            movement: BhopMovement3D::default(),
-            ground_friction: GroundFriction3D::default(),
-            shape: Cylinder::new(0.5, 0.2).into(),
-            physical_entity: PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
-            mass: Mass3::new(1.0),
-        }
-    }
-}*/
 
 #[derive(Deserialize, Serialize)]
 pub struct PlayerPrefabData {
@@ -319,6 +279,84 @@ impl RuntimeProgress {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct RuntimeMap {
+	pub start_zone: Entity,
+	pub end_zone: Entity,
+	pub segment_zones: Vec<(u8, Entity)>,
+}
+
+#[derive(Default)]
+pub struct RuntimeMapBuilder {
+	pub start_zone: Option<Entity>,
+	pub end_zone: Option<Entity>,
+	pub segment_zones: Vec<(u8, Entity)>,
+}
+
+impl RuntimeMapBuilder {
+	pub fn start_zone(mut self, entity: Entity) -> Self {
+		self.start_zone = Some(entity);
+		self
+	}
+
+	pub fn end_zone(mut self, entity: Entity) -> Self {
+		self.end_zone = Some(entity);
+		self
+	}
+
+	pub fn build(mut self, map_info: &MapInfo) -> Result<RuntimeMap, String> {
+		let start_zone = self.start_zone.ok_or("StartZone is not present in map.")?;
+		let end_zone = self.end_zone.ok_or("EndZone is not present in map.")?;
+        
+        order_segment_zones(&mut self.segment_zones);
+        validate_segment_zones(&self.segment_zones, map_info)?;
+        Ok(RuntimeMap {
+        	start_zone,
+        	end_zone,
+        	segment_zones: self.segment_zones,
+        })
+    }
+}
+
+pub fn order_segment_zones(segment_zones: &mut Vec<(u8, Entity)>) {
+	segment_zones.sort_unstable_by(|a,b| a.0.cmp(&b.0));
+}
+
+/// Checks if the number of segments matches the number of segments indicated in the map info file.
+/// Checks if the segment zones are in order and continuous and start at 1 and don't go over 254 and are not duplicated.
+/// Expects the segment zones to be ordered by id.
+pub fn validate_segment_zones(segment_zones: &Vec<(u8, Entity)>, map_info: &MapInfo) -> Result<(), String> {
+	if segment_zones.len() > 254 {
+		return Err(format!("Failed to load map: Too many segment zones (max 254)."));
+	}
+
+	if (segment_zones.len() + 1) as u8 != map_info.segment_count {
+		return Err(format!("Failed to load map:\nThe segment zones count in the gltf (glb) map file + 1
+			doesn't match the segment_count value of the map info file (.hop)\n
+			glTF: {} + 1, map info: {}",
+			segment_zones.len(),
+			map_info.segment_count
+		));
+	}
+
+	let mut last = 0u8;
+	for seg_id in segment_zones.iter().map(|t| t.0) {
+		// Duplicate id.
+		if seg_id == last {
+			return Err(format!("Failed to load map: Two segment zones have the same id: {}", seg_id));
+		}
+		// Non-continuous id distribution.
+		if seg_id != last + 1u8 {
+			return Err(format!("Failed to load map: There is a gap in the segment zone id. Jumped from {} to {}", last, seg_id));
+		}
+		last = seg_id;
+	}
+
+	// Good to go!
+	Ok(())
+}
+
+
 pub struct RelativeTimerSystem;
 
 impl<'a> System<'a> for RelativeTimerSystem {
@@ -428,22 +466,31 @@ impl<'a> System<'a> for ContactSystem {
                 ObjectType::KillZone => {
                     info!("you are ded!");
                     let seg = runtime_progress.current_segment;
-                    if seg == 1 {
+                    let pos = if seg == 1 {
                         // To start zone
-                        let pos = (&transforms, &object_types).join().filter(|(_,obj)| **obj == ObjectType::StartZone).map(|(tr,_)| tr.translation).next().unwrap();
-                        let mut body_pose = (&players, &mut body_poses).join().map(|t| t.1).next().unwrap();
-                        let pos = Point3::new(pos.x, pos.y, pos.z);
-                        body_pose.value.set_position(pos);
+                        (&transforms, &object_types).join().filter(|(_,obj)| **obj == ObjectType::StartZone).map(|(tr,_)| tr.translation).next().unwrap()
                     } else {
                         // To last checkpoint
-                        unimplemented!();
-                    }
+
+                        // Find checkpoint corresponding to the current segment in progress
+                        (&transforms, &object_types).join().filter(|(_,obj)| {
+                        	if let ObjectType::SegmentZone(s) = **obj {
+                        		s == seg - 1
+                        	} else {
+                        		false
+                        	}
+                        }).map(|(tr,_)| tr.translation).next().unwrap()
+                    };
+
+                    // Move the player
+                    let mut body_pose = (&players, &mut body_poses).join().map(|t| t.1).next().unwrap();
+                    let pos = Point3::new(pos.x, pos.y, pos.z);
+                    body_pose.value.set_position(pos);
                 }
                 ObjectType::SegmentZone(id) => {
-                    if *id > runtime_progress.current_segment {
-                        runtime_progress.segment_times[(*id - 1) as usize] =
-                            timer.duration() as f32;
-                        runtime_progress.current_segment = *id;
+                    if *id + 1 > runtime_progress.current_segment {
+                        runtime_progress.segment_times[(*id) as usize] = timer.duration() as f32;
+                        runtime_progress.current_segment = *id + 1;
                     }
                     info!("segment done");
                 }
@@ -461,36 +508,10 @@ impl<'a> System<'a> for ContactSystem {
     }
 }
 
-#[derive(Default, Serialize, Deserialize, Clone, Debug)]
-pub struct Stats {}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum MapCategory {
-    Speed,
-    Technical,
-    Gimmick,
-    Uphill,
-    Downhill,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum MapDifficulty {
-    Easy,
-    Normal,
-    Hard,
-    Insane,
-    Extreme,
-    Master,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MapInfo {
-    pub id: Uuid,
-    pub name: String,
-    pub mapper: String,
-    pub categories: Vec<MapCategory>,
-    pub difficulty: MapDifficulty,
-    pub tags: Vec<String>,
+pub struct RuntimeStats {
+	pub jumps: u32,
+	pub strafes: u32,
+	pub jump_timings: VecDeque<(f64, f32)>,
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, new)]
@@ -499,10 +520,10 @@ pub struct MapInfoCache {
     pub maps: Vec<(String, MapInfo)>,
 }
 
+/// Single row of the MapInfoCache
+/// File name -> MapInfo
 #[derive(Debug, Clone, new)]
-pub struct CurrentMap {
-    pub map: (String, MapInfo),
-}
+pub struct CurrentMap(String, MapInfo);
 
 pub fn get_all_maps(base_path: &str) -> MapInfoCache {
     let maps_path = format!(
@@ -549,7 +570,7 @@ pub struct UiUpdaterSystem;
 impl<'a> System<'a> for UiUpdaterSystem {
     type SystemData = (
         Read<'a, RelativeTimer>,
-        Read<'a, Stats>,
+        Read<'a, PlayerStats>,
         ReadStorage<'a, Velocity3<f32>>,
         ReadStorage<'a, Jump>,
         ReadStorage<'a, UiTransform>,
@@ -589,6 +610,13 @@ pub fn avg_float_to_string(value: f32, decimals: u32) -> String {
     ((value * mult).ceil() / mult).to_string()
 }
 
+pub fn add_removal_to_entity(entity: Entity, id: RemovalId, world: &World) {
+	world
+        .write_storage::<Removal<RemovalId>>()
+        .insert(entity, Removal::new(id))
+        .expect(&format!("Failed to insert removalid to entity {:?}.", entity));
+}
+
 #[derive(Default)]
 struct InitState;
 
@@ -597,6 +625,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for InitState {
         data.world.register::<ObjectType>();
         data.world.register::<Removal<RemovalId>>();
         data.world.add_resource(get_all_maps(&get_working_dir()));
+        data.world.add_resource(AmbientColor(Rgba::from([0.1; 3])));
 
         let mut world_param = WorldParameters::new(-Vector3::<f32>::unit_y());
         world_param = world_param.with_damping(1.0);
@@ -623,10 +652,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/menu_ui.ron", ()));
-        data.world
-            .write_storage::<Removal<RemovalId>>()
-            .insert(ui_root, Removal::new(RemovalId::MenuUi))
-            .expect("Failed to insert removalid to ui_root for main menu state.");
+        add_removal_to_entity(ui_root, RemovalId::MenuUi, &data.world);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -675,10 +701,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
         let ui_root = data.world.exec(|mut creator: UiCreator| {
             creator.create("assets/base/prefabs/map_select_ui.ron", ())
         });
-        data.world
-            .write_storage::<Removal<RemovalId>>()
-            .insert(ui_root, Removal::new(RemovalId::MapSelectUi))
-            .expect("Failed to insert removalid to ui_root for map select state.");
+        add_removal_to_entity(ui_root, RemovalId::MapSelectUi, &data.world);
 
         let font = data
             .world
@@ -704,10 +727,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
                     .with_position(0.0, -300.0 - 100.0 * accum as f32)
                     .with_anchor(Anchor::TopMiddle)
                     .build_from_world(data.world);
-            data.world
-                .write_storage::<Removal<RemovalId>>()
-                .insert(entity, Removal::new(RemovalId::MapSelectUi))
-                .unwrap();
+            add_removal_to_entity(entity, RemovalId::MapSelectUi, &data.world);
         }
     }
 
@@ -758,7 +778,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
         }
 
         if let Some(row) = change_map {
-            data.world.add_resource(CurrentMap::new(row));
+            data.world.add_resource(CurrentMap::new(row.0, row.1));
             return Trans::Switch(Box::new(MapLoadState::default()));
         }
         Trans::None
@@ -847,10 +867,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/pause_ui.ron", ()));
-        data.world
-            .write_storage::<Removal<RemovalId>>()
-            .insert(ui_root, Removal::new(RemovalId::PauseUi))
-            .expect("Failed to insert removalid to ui_root for pause state.");
+        add_removal_to_entity(ui_root, RemovalId::PauseUi, &data.world);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -905,6 +922,26 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
     }
 }
 
+
+pub fn verts_from_mesh_data(mesh_data: &MeshData, scale: &Vector3<f32>) -> Vec<Point3<f32>> {
+	if let MeshData::Creator(combo) = mesh_data {
+        combo
+            .vertices()
+            .iter()
+            .map(|sep| {
+                Point3::new(
+                    (sep.0)[0] * scale.x,
+                    (sep.0)[1] * scale.y,
+                    (sep.0)[2] * scale.z,
+                )
+            }).collect::<Vec<_>>()
+    } else {
+    	error!("MeshData was not of combo type! Not extracting vertices.");
+        vec![]
+    }
+}
+
+
 #[derive(Default)]
 struct MapLoadState {
     load_progress: Option<ProgressCounter>,
@@ -919,7 +956,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
 
         let mut pg = ProgressCounter::new();
 
-        let name = data.world.read_resource::<CurrentMap>().map.0.clone();
+        let name = data.world.read_resource::<CurrentMap>().0.clone();
 
         let scene_handle = data.world.exec(|loader: PrefabLoader<GltfPrefab>| {
             loader.load(
@@ -945,10 +982,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
         self.load_progress = Some(pg);
 
         let scene_root = data.world.create_entity().with(scene_handle).build();
-        data.world
-            .write_storage::<Removal<RemovalId>>()
-            .insert(scene_root, Removal::new(RemovalId::Scene))
-            .expect("Failed to insert removalid to scene for gameplay state.");
+        add_removal_to_entity(scene_root, RemovalId::Scene, &data.world);
 
         //data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
         data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
@@ -957,11 +991,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
         let mut tr = Transform::default();
         tr.translation = [0.0, 5.0, 0.0].into();
 
-        let movement = BhopMovement3D::new(false, 20.0, 20.0, 2.0, 0.5, true);
-        let ground_friction = GroundFriction3D::new(2.0, FrictionMode::Percent, 0.15);
-
-        //let player_settings = data.world.read_resource::<PlayerSettings>().physical_entity.clone();
-
         let player_entity = data
             .world
             .create_entity()
@@ -969,10 +998,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             .with(player_settings.grounded)
             .with(player_settings.ground_friction)
             .with(FlyControlTag)
-            //.with(Grounded::new(0.5))
             .with(ObjectType::Player)
-            //.with(movement)
-            //.with(ground_friction)
             .with(Jump::new(true, true, 1.0, true))
             .with(Player)
             .with_dynamic_physical_entity(
@@ -988,7 +1014,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                     Quaternion::<f32>::one(),
                 ),
                 Velocity3::default(),
-                //PhysicalEntity::new(Material::new(1.0, 0.05)).with_gravity_scale(1.0).with_damping(1.0),
                 player_settings.physical_entity.clone(),
                 Mass3::new(player_settings.mass),
                 //player_settings.mass.clone(),
@@ -999,6 +1024,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             .build();
 
         let mut tr = Transform::default();
+        
         // TODO add conf ability to this
         tr.translation = [0.0, 0.25, 0.0].into();
         data.world
@@ -1012,10 +1038,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
 
         self.player_entity = Some(player_entity);
 
-        data.world.add_resource(AmbientColor(Rgba::from([0.1; 3])));
         let mut tr = Transform::default();
         tr.translation = [0.0, 10.0, 0.0].into();
         tr.rotation = Quaternion::one();
+        
         data.world
             .create_entity()
             .with(tr)
@@ -1030,10 +1056,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
         let ui_root = data.world.exec(|mut creator: UiCreator| {
             creator.create("assets/base/prefabs/gameplay_ui.ron", ())
         });
-        data.world
-            .write_storage::<Removal<RemovalId>>()
-            .insert(ui_root, Removal::new(RemovalId::GameplayUi))
-            .expect("Failed to insert removalid to ui_root for gameplay state.");
+        add_removal_to_entity(ui_root, RemovalId::GameplayUi, &data.world);
 
         data.world.add_resource(RuntimeProgress::default());
         MyPhysicalEntityParts::setup(&mut data.world.res)
@@ -1050,40 +1073,37 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             )
                 .par_join()
                 .map(|(entity, transform, mesh_data, name)| {
-                    info!("map transform: {:?}", transform);
-                    let verts = if let MeshData::Creator(combo) = mesh_data {
-                        info!("vertices: {:?}", combo.vertices());
-                        combo
-                            .vertices()
-                            .iter()
-                            .map(|sep| {
-                                Point3::new(
-                                    (sep.0)[0] * transform.scale.x,
-                                    (sep.0)[1] * transform.scale.y,
-                                    (sep.0)[2] * transform.scale.z,
-                                )
-                            }).collect::<Vec<_>>()
-                    } else {
-                        vec![]
-                    };
+                    let verts = verts_from_mesh_data(mesh_data, &transform.scale);
                     (entity, transform.clone(), verts, name.name.clone())
                 }).collect::<Vec<_>>();
 
             if !entity_sizes.is_empty() {
                 // The loading is done, now we add the colliders.
 
+                let mut runtime_map = RuntimeMapBuilder::default();
+
                 let mut max_segment = 0;
-                let mut spawn_position = Vector3::new(0.0, 0.0, 0.0);
-                let mut spawn_rotation = Quaternion::one();
                 self.init_done = true;
-                {
-                    let mut collider_storage = data.world.write_storage::<ObjectType>();
-                    for (entity, transform, _, name) in &entity_sizes {
-                        let (obj_type, _coll_strat) = if name == "StartZone" {
-                            spawn_position = transform.translation.clone();
-                            spawn_rotation = transform.rotation.clone();
+
+                let max_segment = {
+                	let (mut physical_parts, mut object_types, players) = <(MyPhysicalEntityParts, WriteStorage<ObjectType>, ReadStorage<Player>) as SystemData>::fetch(&data.world.res);
+                    for (entity, transform, mesh, name) in entity_sizes {
+                        let (obj_type, coll_strat) = if name == "StartZone" {
+                            // Move player to StartZone
+		                    for (mut body_pose, _) in (&mut physical_parts.next_poses, &players).join() {
+		                        body_pose.value.set_position(Point3::new(transform.translation.x, transform.translation.y, transform.translation.z));
+		                        body_pose.value.set_rotation(transform.rotation);
+		                    }
+		                    if runtime_map.start_zone.is_some() {
+		                    	panic!("There can be only one StartZone per map");
+		                    }
+		                    runtime_map = runtime_map.start_zone(entity);
                             (ObjectType::StartZone, CollisionStrategy::CollisionOnly)
                         } else if name == "EndZone" {
+                        	if runtime_map.end_zone.is_some() {
+		                    	panic!("There can be only one EndZone per map");
+		                    }
+                        	runtime_map = runtime_map.end_zone(entity);
                             (ObjectType::EndZone, CollisionStrategy::CollisionOnly)
                         } else if name.starts_with("KillZone") {
                             (ObjectType::KillZone, CollisionStrategy::CollisionOnly)
@@ -1093,46 +1113,20 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                             if id > max_segment {
                                 max_segment = id;
                             }
-                            (
-                                ObjectType::SegmentZone(id),
-                                CollisionStrategy::CollisionOnly,
-                            )
+
+                            runtime_map.segment_zones.push((id,entity));
+                            (ObjectType::SegmentZone(id),CollisionStrategy::CollisionOnly)
                         } else {
                             (ObjectType::Scene, CollisionStrategy::FullResolution)
                         };
-                        collider_storage
-                            .insert(*entity, obj_type)
+
+                        object_types
+                            .insert(entity, obj_type.clone())
                             .expect("Failed to add ObjectType to map mesh");
-                    }
-                }
-
-                {
-                    for (mut body_pose, _) in (&mut data.world.write_storage::<NextFrame<BodyPose3<f32>>>(), &data.world.read_storage::<Player>()).join() {
-                        body_pose.value.set_position(Point3::new(spawn_position.x, spawn_position.y, spawn_position.z));
-                        body_pose.value.set_rotation(spawn_rotation);
-                    }
-                }
-
-                data.world.add_resource(RuntimeProgress::new(max_segment));
-                {
-                    let mut physical_parts = MyPhysicalEntityParts::fetch(&data.world.res);
-                    for (entity, size, mesh, name) in entity_sizes {
-                        let (obj_type, coll_strat) = if name == "StartZone" {
-                            (ObjectType::StartZone, CollisionStrategy::CollisionOnly)
-                        } else if name == "EndZone" {
-                            (ObjectType::EndZone, CollisionStrategy::CollisionOnly)
-                        } else if name.starts_with("KillZone") || name.starts_with("SegmentZone") {
-                            (ObjectType::KillZone, CollisionStrategy::CollisionOnly)
-                        } else {
-                            (ObjectType::Scene, CollisionStrategy::FullResolution)
-                        };
-
                         physical_parts
                             .static_entity(
                                 entity,
                                 Shape::new_simple_with_type(
-                                    //CollisionStrategy::FullResolution,
-                                    //CollisionStrategy::CollisionOnly,
                                     coll_strat,
                                     CollisionMode::Discrete,
                                     Primitive3::ConvexPolyhedron(<ConvexPolyhedron<f32>>::new(
@@ -1142,25 +1136,29 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                                 ),
                                 BodyPose3::new(
                                     Point3::new(
-                                        size.translation.x,
-                                        size.translation.y,
-                                        size.translation.z,
+                                        transform.translation.x,
+                                        transform.translation.y,
+                                        transform.translation.z,
                                     ),
-                                    size.rotation,
+                                    transform.rotation,
                                 ),
                                 PhysicalEntity::default(),
                                 Mass3::infinite(),
                             ).expect("Failed to add static collider to map mesh");
                     }
-                }
+
+                	max_segment
+            	};
+
+            	// Validate map
+            	runtime_map.build(&data.world.read_resource::<CurrentMap>().1).unwrap();
+
+
+                data.world.add_resource(RuntimeProgress::new(max_segment));
             }
         } else if self.init_done {
             return Trans::Switch(Box::new(GameplayState::default()));
         }
-
-        (&data.world.read_storage::<UiTransform>(),)
-            .join()
-            .for_each(|tr| info!("ui tr: {:?}", tr));
 
         data.data.update(&data.world);
         Trans::None
@@ -1175,10 +1173,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/result_ui.ron", ()));
-        data.world
-            .write_storage::<Removal<RemovalId>>()
-            .insert(ui_root, Removal::new(RemovalId::ResultUi))
-            .expect("Failed to insert removalid to ui_root for result state.");
+        add_removal_to_entity(ui_root, RemovalId::ResultUi, &data.world);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -1255,7 +1250,7 @@ fn main() -> amethyst::Result<()> {
 
     let pipe = Pipeline::build().with_stage(
         Stage::with_backbuffer()
-            .clear_target([0.0, 1.0, 0.0, 1.0], 1.0)
+            .clear_target([0.1, 0.1, 0.1, 1.0], 1.0)
             .with_pass(DrawPbmSeparate::new().with_transparency(
                 ColorMask::all(),
                 ALPHA,

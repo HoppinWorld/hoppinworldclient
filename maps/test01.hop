@@ -11,4 +11,5 @@ MapInfo(
         "test",
         "first",
     ],
+    segment_count: 1,
 )
