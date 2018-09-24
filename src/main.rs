@@ -135,7 +135,7 @@ struct Gravity {
 impl Default for Gravity {
     fn default() -> Self {
         Gravity {
-            acceleration: Vector3::new(0.0, -2.0, 0.0),
+            acceleration: Vector3::new(0.0, -1.0, 0.0),
         }
     }
 }
@@ -165,6 +165,8 @@ pub struct PlayerSettings {
     pub shape: Primitive3<f32>,
     pub physical_entity: PhysicalEntity<f32>,
     pub mass: f32,
+    pub gravity: f32,
+    pub jump_velocity: f32,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -984,12 +986,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
         let scene_root = data.world.create_entity().with(scene_handle).build();
         add_removal_to_entity(scene_root, RemovalId::Scene, &data.world);
 
-        //data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
-        data.world.add_resource(Gravity::new(Vector3::new(0.0, -2.0, 0.0)));
-
-
-        let mut tr = Transform::default();
-        tr.translation = [0.0, 5.0, 0.0].into();
+        data.world.add_resource(Gravity::new(Vector3::new(0.0, player_settings.gravity, 0.0)));
 
         let player_entity = data
             .world
@@ -999,7 +996,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             .with(player_settings.ground_friction)
             .with(FlyControlTag)
             .with(ObjectType::Player)
-            .with(Jump::new(true, true, 1.0, true))
+            .with(Jump::new(true, true, player_settings.jump_velocity, true))
             .with(Player)
             .with_dynamic_physical_entity(
                 Shape::new_simple_with_type(
@@ -1010,7 +1007,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                     ObjectType::Player,
                 ),
                 BodyPose3::new(
-                    Point3::new(tr.translation.x, tr.translation.y, tr.translation.z),
+                    Point3::new(0.,0.,0.),
                     Quaternion::<f32>::one(),
                 ),
                 Velocity3::default(),
@@ -1018,7 +1015,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 Mass3::new(player_settings.mass),
                 //player_settings.mass.clone(),
             )
-            .with(tr)
+            .with(Transform::default())
             .with(ForceAccumulator::<Vector3<f32>, Vector3<f32>>::new())
             .with(Removal::new(RemovalId::Scene))
             .build();
