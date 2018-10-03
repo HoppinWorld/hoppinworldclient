@@ -2,7 +2,7 @@ PlayerSettings(
     grounded: Grounded(
         ground: false,
         since: 0.0,
-        distance_check: 0.405,
+        distance_check: 0.401,
     ),
     movement: BhopMovement3D(
         absolute: false,
@@ -26,7 +26,8 @@ PlayerSettings(
     physical_entity: PhysicalEntity(
         material: Material(
             density: 1.0,
-            restitution: 0.05,
+            //restitution: 0.05,
+            restitution: 0.00,
         ),
         gravity_scale: 1.0,
         damping: Some(1.0),

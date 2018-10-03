@@ -18,6 +18,10 @@ extern crate hoppinworlddata;
 #[macro_use]
 extern crate derive_builder;
 
+use amethyst_rhusics::rhusics_core::basic_collide;
+use amethyst::assets::Handle;
+use amethyst::utils::removal::Removal;
+use amethyst::utils::removal::exec_removal;
 use std::collections::VecDeque;
 use hoppinworlddata::*;
 use amethyst::assets::Prefab;
@@ -56,9 +60,9 @@ use amethyst_rhusics::collision::{Aabb3, Ray3};
 use amethyst_rhusics::rhusics_core::physics3d::{Mass3, Velocity3};
 use amethyst_rhusics::rhusics_core::{
     Collider, CollisionMode, CollisionShape, CollisionStrategy, ContactEvent, ForceAccumulator,
-    Material, NextFrame, PhysicalEntity, Pose, WorldParameters,
+    Material, NextFrame, PhysicalEntity, Pose, WorldParameters, BroadPhase, NarrowPhase
 };
-use amethyst_rhusics::rhusics_ecs::physics3d::{BodyPose3, DynamicBoundingVolumeTree3};
+use amethyst_rhusics::rhusics_ecs::physics3d::{BodyPose3, DynamicBoundingVolumeTree3, SweepAndPrune3, GJK3};
 use amethyst_rhusics::rhusics_ecs::{PhysicalEntityParts, WithPhysics};
 use amethyst_rhusics::{time_sync, DefaultPhysicsBundle3};
 use partial_function::*;
@@ -110,6 +114,7 @@ pub enum ObjectType {
     KillZone,
     Player,
     Dynamic,
+    Ignore,
     SegmentZone(u8),
 }
 
@@ -196,22 +201,6 @@ pub struct PlayerPrefabData {
     ) -> Result<(), ECSError> {
         let (ref mut groundeds, ref mut movements, ref mut frictions, ref mut player_settings) = system_data;
         println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
-        println!("STUFF GOING ON!");
 
         groundeds.insert(entity, self.grounded.clone())?;
         movements.insert(entity, self.movement.clone())?;
@@ -234,7 +223,7 @@ pub struct RelativeTimer {
 
 impl RelativeTimer {
     pub fn get_text(&self) -> String {
-        ((self.duration() * 1000.0).ceil() / 1000.0).to_string()
+        sec_to_display(self.duration())
     }
     pub fn duration(&self) -> f64 {
         self.current - self.start
@@ -254,10 +243,21 @@ impl RelativeTimer {
     }
 }
 
+
+pub fn sec_to_display(secs: f64) -> String {
+    if secs > -0.00001 && secs < 0.00001 {
+        String::from("-")
+    } else {
+        ((secs * 1000.0).ceil() / 1000.0).to_string()
+    }
+}
+
+
+#[derive(Debug, Clone, Serialize)]
 pub struct RuntimeProgress {
     pub current_segment: u8,
     pub segment_count: u8,
-    pub segment_times: Vec<f32>,
+    pub segment_times: Vec<f64>,
 }
 
 impl Default for RuntimeProgress {
@@ -276,7 +276,7 @@ impl RuntimeProgress {
             current_segment: 1u8,
             segment_count,
             // +1 to take into account last segment to end zone
-            segment_times: vec![0.0; (segment_count + 1) as usize],
+            segment_times: vec![0.0; (segment_count) as usize],
         }
     }
 }
@@ -434,7 +434,9 @@ impl<'a> System<'a> for ContactSystem {
 
             match other {
                 ObjectType::StartZone => {
-                    timer.start(time.absolute_time_seconds());
+                    if runtime_progress.current_segment == 1 {
+                        timer.start(time.absolute_time_seconds());
+                    }
                     // Also limit player velocity while touching the StartZone to prevent any early starts.
                     // Not sure if this should go into state or not. Since it is heavily related to gameplay I'll put it here.
                     for (entity, _, movement, mut velocity) in
@@ -462,7 +464,7 @@ impl<'a> System<'a> for ContactSystem {
                     timer.stop();
                     info!("Finished! time: {:?}", timer.duration());
                     let id = runtime_progress.segment_count as usize;
-                    runtime_progress.segment_times[id] = timer.duration() as f32;
+                    runtime_progress.segment_times[id-1] = timer.duration();
                     state_eventchannel.single_write(CustomStateEvent::MapFinished);
                 }
                 ObjectType::KillZone => {
@@ -490,8 +492,8 @@ impl<'a> System<'a> for ContactSystem {
                     body_pose.value.set_position(pos);
                 }
                 ObjectType::SegmentZone(id) => {
-                    if *id + 1 > runtime_progress.current_segment {
-                        runtime_progress.segment_times[(*id) as usize] = timer.duration() as f32;
+                    if *id >= runtime_progress.current_segment {
+                        runtime_progress.segment_times[(*id-1) as usize] = timer.duration();
                         runtime_progress.current_segment = *id + 1;
                     }
                     info!("segment done");
@@ -724,7 +726,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
                     .with_font(font.clone())
                     .with_text_color([0.2, 0.2, 0.2, 1.0])
                     .with_font_size(30.0)
-                    .with_size(512.0, 200.0)
+                    .with_size(512.0, 75.0)
                     .with_layer(8.0)
                     .with_position(0.0, -300.0 - 100.0 * accum as f32)
                     .with_anchor(Anchor::TopMiddle)
@@ -806,6 +808,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         time_sync(&data.world);
+        (&data.world.read_storage::<Transform>(), &data.world.read_storage::<ObjectType>()).join().filter(|t| *t.1 == ObjectType::Player).for_each(|t| info!("{:?}", t));
         data.data.update(&data.world);
         Trans::None
     }
@@ -1002,6 +1005,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 Shape::new_simple_with_type(
                     CollisionStrategy::FullResolution,
                     CollisionMode::Discrete,
+                    //CollisionMode::Continuous,
                     //Cylinder::new(0.5, 0.2).into(),
                     player_settings.shape.clone(),
                     ObjectType::Player,
@@ -1033,6 +1037,38 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 entity: player_entity.clone(),
             }).build();
 
+
+        // Secondary ground collider
+        /*let tr = Transform::from(Vector3::new(0.,-0.4025,0.));
+        let secondary = data
+            .world
+            .create_entity()
+            .with(ObjectType::Player)
+            .with_dynamic_physical_entity(
+                Shape::new_simple_with_type(
+                    CollisionStrategy::CollisionOnly,
+                    CollisionMode::Discrete,
+                    Cylinder::new(0.05, 0.15).into(),
+                    ObjectType::Player,
+                ),
+                BodyPose3::new(
+                    Point3::new(tr.translation.x,tr.translation.y,tr.translation.z),
+                    Quaternion::<f32>::one(),
+                ),
+                Velocity3::default(),
+                PhysicalEntity::default(),
+                Mass3::infinite(),
+                //player_settings.mass.clone(),
+            )
+            .with(tr)
+            .with(Parent {
+                entity: player_entity.clone(),
+            })
+            .build();*/
+
+        // Assign secondary collider to player's Grounded component
+        //(&mut data.world.write_storage::<Grounded>()).join().for_each(|grounded| grounded.watch_entity = Some(secondary.clone()));
+
         self.player_entity = Some(player_entity);
 
         let mut tr = Transform::default();
@@ -1060,6 +1096,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
+
         if !self.init_done && self.load_progress.as_ref().unwrap().is_complete() {
             info!("BBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
             let entity_sizes = (
@@ -1083,7 +1120,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 self.init_done = true;
 
                 let max_segment = {
-                	let (mut physical_parts, mut object_types, players) = <(MyPhysicalEntityParts, WriteStorage<ObjectType>, ReadStorage<Player>) as SystemData>::fetch(&data.world.res);
+                	let (mut physical_parts, mut object_types, mut meshes, players) = <(MyPhysicalEntityParts, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<Player>) as SystemData>::fetch(&data.world.res);
                     for (entity, transform, mesh, name) in entity_sizes {
                         let (obj_type, coll_strat) = if name == "StartZone" {
                             // Move player to StartZone
@@ -1104,6 +1141,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                             (ObjectType::EndZone, CollisionStrategy::CollisionOnly)
                         } else if name.starts_with("KillZone") {
                             (ObjectType::KillZone, CollisionStrategy::CollisionOnly)
+                        } else if name.starts_with("Ignore") {
+                            (ObjectType::Ignore, CollisionStrategy::CollisionOnly)
                         } else if name.starts_with("SegmentZone") {
                             let id_str = &name[11..];
                             let id = id_str.to_string().parse::<u8>().unwrap(); // TODO error handling for maps
@@ -1116,6 +1155,12 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                         } else {
                             (ObjectType::Scene, CollisionStrategy::FullResolution)
                         };
+
+                        if name.contains("Invisible") {
+                            if meshes.contains(entity) {
+                                meshes.remove(entity);
+                            }
+                        }
 
                         object_types
                             .insert(entity, obj_type.clone())
@@ -1151,7 +1196,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
             	runtime_map.build(&data.world.read_resource::<CurrentMap>().1).unwrap();
 
 
-                data.world.add_resource(RuntimeProgress::new(max_segment));
+                data.world.add_resource(RuntimeProgress::new(max_segment + 1));
             }
         } else if self.init_done {
             return Trans::Switch(Box::new(GameplayState::default()));
@@ -1171,6 +1216,46 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
             .world
             .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/result_ui.ron", ()));
         add_removal_to_entity(ui_root, RemovalId::ResultUi, &data.world);
+
+        // Time table.
+        let runtime_progress = data.world.read_resource::<RuntimeProgress>().clone();
+
+        info!("SEGMENT TIMES: ");
+        for t in &runtime_progress.segment_times {
+            print!("{},", t);
+        }
+        info!("");
+        info!("RUN DONE!");
+
+        let font = data
+            .world
+            .read_resource::<AssetLoader>()
+            .load(
+                "font/arial.ttf",
+                FontFormat::Ttf,
+                (),
+                &mut data.world.write_resource(),
+                &mut data.world.write_resource(),
+                &data.world.read_resource(),
+            ).expect("Failed to load font");
+
+        let mut accum = 0.0;
+        for (segment, time) in runtime_progress.segment_times.iter().enumerate() {
+            // Accum
+            data.world.create_entity()
+                .with(UiTransform::new(String::from(""), Anchor::TopMiddle, -200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
+                .with(UiText::new(font.clone(), sec_to_display(*time), [0.1,0.1,0.1,1.0], 35.0))
+                .with(Removal::new(RemovalId::ResultUi))
+                .build();
+
+            // Segment
+            data.world.create_entity()
+                .with(UiTransform::new(String::from(""), Anchor::TopMiddle, 200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
+                .with(UiText::new(font.clone(), sec_to_display(*time - accum), [0.1,0.1,0.1,1.0], 35.0))
+                .with(Removal::new(RemovalId::ResultUi))
+                .build();
+            accum = *time;
+        }
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -1217,6 +1302,93 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
     }
 }
 
+
+
+pub struct GroundCheckerColliderSystem<T> {
+    pub collider_types: Vec<T>,
+    narrow: SweepAndPrune3<f32>,
+    broad: GJK3<f32>,
+}
+impl<T> GroundCheckerColliderSystem<T> {
+    pub fn new(collider_types: Vec<T>) -> Self {
+        GroundCheckerColliderSystem {
+            collider_types,
+            narrow: SweepAndPrune3::new(),
+            broad: GJK3::new(),
+        }
+    }
+}
+
+impl<'a, T: Component + PartialEq> System<'a> for GroundCheckerColliderSystem<T> {
+    type SystemData = (
+        Entities<'a>,
+        ReadStorage<'a, Transform>,
+        ReadStorage<'a, BodyPose3<f32>>,
+        ReadStorage<'a, NextFrage<BodyPose3<f32>>>,
+        ReadStorage<'a, Shape>,
+        WriteStorage<'a, Grounded>,
+        ReadStorage<'a, T>,
+        Read<'a, Time>,
+    );
+
+    fn setup(&mut self, mut res: &mut Resources) {
+        Self::SystemData::setup(&mut res);
+    }
+
+    fn run(
+        &mut self,
+        (entities, transforms, poses, next_poses, shapes, mut grounded, objecttypes, time): Self::SystemData,
+    ) {
+        let down = -Vector3::unit_y();
+        for (entity, transform, mut grounded) in (&*entities, &transforms, &mut grounded).join() {
+            let mut ground = false;
+
+            let ray = Ray3::new(Point3::from_vec(transform.translation), down);
+
+            // For all in ray
+            for (v, p) in query_ray(&*tree, ray) {
+                // Not self and close enough
+                if v.value != entity
+                    && (transform.translation - Vector3::new(p.x, p.y, p.z)).magnitude()
+                        <= grounded.distance_check
+                {
+                    // If we can jump off that type of collider
+                    if let Some(obj_type) = objecttypes.get(v.value) {
+                        if self.collider_types.contains(obj_type) {
+                            ground = true;
+                        }
+                    }
+                    //info!("hit bounding volume of {:?} at point {:?}", v.value, p);
+                }
+            }
+
+
+            /*for (entity, pose, shape) in (&*entities, &poses, &mut shapes).join() {
+                shape.update(pose, next_poses.get(entity).map(|p| &p.value));
+            }*/
+            let coll = basic_collide(
+                &BasicCollisionData {
+                    poses,
+                    shapes,
+                    next_poses,
+                    entities,
+                },
+                &mut Box::new(self.broad),
+                &mut self.narrow,
+            );
+
+
+
+            if ground && !grounded.ground {
+                // Just grounded
+                grounded.since = time.absolute_time_seconds();
+            }
+            grounded.ground = ground;
+        }
+    }
+}
+
+
 fn main() -> amethyst::Result<()> {
     /*
 
@@ -1248,11 +1420,14 @@ fn main() -> amethyst::Result<()> {
     let pipe = Pipeline::build().with_stage(
         Stage::with_backbuffer()
             .clear_target([0.1, 0.1, 0.1, 1.0], 1.0)
-            .with_pass(DrawPbmSeparate::new().with_transparency(
-                ColorMask::all(),
-                ALPHA,
-                Some(DepthMode::LessEqualWrite),
-            )).with_pass(DrawUi::new()),
+            .with_pass(
+                DrawPbmSeparate::new()
+                    .with_transparency(
+                    ColorMask::all(),
+                    ALPHA,
+                    Some(DepthMode::LessEqualWrite),
+                )
+            ).with_pass(DrawUi::new()),
     );
 
     let game_data = GameDataBuilder::default()
@@ -1301,7 +1476,9 @@ fn main() -> amethyst::Result<()> {
         )?.with_bundle(UiBundle::<String, String>::new())?
         .with_barrier()
         .with_bundle(DefaultPhysicsBundle3::<ObjectType>::new().with_spatial())?
-        .with_bundle(RenderBundle::new(pipe, Some(display_config)))?;
+        .with_bundle(RenderBundle::new(pipe, Some(display_config))
+            //.with_visibility_sorting(&[])
+        )?;
     let mut game = Application::build(resources_directory, InitState::default())?
         .with_resource(asset_loader)
         .with_resource(AssetLoaderInternal::<FontAsset>::new())

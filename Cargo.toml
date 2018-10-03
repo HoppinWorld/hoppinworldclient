@@ -5,11 +5,16 @@ authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 
 [dependencies]
 
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
-amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+#amethyst = { git = "https://github.com/amethyst/amethyst" }
+#amethyst_gltf = { git = "https://github.com/amethyst/amethyst" }
 
 
-amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
+#amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
+amethyst-extra = { path = "../../amethyst-extra" }
+
+
 #amethyst-rhusics = { path = "../amethyst-rhusicshoppinworld" }
 amethyst-rhusics = { git = "https://github.com/amethyst/amethyst-rhusics" }
 serde = { version = "1", features = ["serde_derive"] }
@@ -26,19 +31,24 @@ hoppinworlddata = { git = "https://github.com/hoppinworld/data" }
 
 [patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
+
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+#amethyst = { git = "https://github.com/amethyst/amethyst" }
+#amethyst_core = { git = "https://github.com/amethyst/amethyst" }
+#amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
+
 #collision = { git = "https://github.com/rustgd/collision-rs", features = ["serde"] }
 
 [patch.'https://github.com/amethyst/amethyst']
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "textalign3" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
 
-[patch.'https://github.com/rustgd/rhusics']
-rhusics-core = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
-rhusics-ecs = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
+#[patch.'https://github.com/rustgd/rhusics']
+#rhusics-core = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
+#rhusics-ecs = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
 
 #[replace]
 #"collision:0.18.0" = { version = "0.18", features = ["serde"] }

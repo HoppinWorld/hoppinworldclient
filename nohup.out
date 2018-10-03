@@ -203,3 +203,4 @@
    Compiling amethyst-extra v0.3.0 (https://github.com/jojolepro/amethyst-extra#586cfd76)
    Compiling hoppinworld v0.1.0 (file:///shareddata/share/Prog/Rust/hoppinworld)
     Finished dev [unoptimized + debuginfo] target(s) in 1m 54s
+Error: Unable to access jarfile share/Games/Minecraft.jar

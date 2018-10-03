@@ -10,5 +10,5 @@ MapInfo(
     difficulty: Easy,
     tags: [
     ],
-    segment_count: 2,
+    segment_count: 3,
 )
