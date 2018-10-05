@@ -29,6 +29,8 @@ ron = "0.4"
 
 hoppinworlddata = { git = "https://github.com/hoppinworld/data" }
 
+amethyst-editor-sync = "0.1.1"
+
 [patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }
 
@@ -38,6 +40,7 @@ amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "glt
 #amethyst = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_core = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
+
 
 #collision = { git = "https://github.com/rustgd/collision-rs", features = ["serde"] }
 

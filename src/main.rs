@@ -15,9 +15,13 @@ extern crate specs_derive;
 extern crate ron;
 extern crate uuid;
 extern crate hoppinworlddata;
+extern crate amethyst_editor_sync;
+
 #[macro_use]
 extern crate derive_builder;
 
+
+use amethyst_editor_sync::*;
 use amethyst_rhusics::rhusics_core::basic_collide;
 use amethyst::assets::Handle;
 use amethyst::utils::removal::Removal;
@@ -106,7 +110,7 @@ pub enum RemovalId {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, PartialOrd, PartialEq, Component)]
+#[derive(Debug, Clone, PartialOrd, PartialEq, Component, Serialize, Deserialize)]
 pub enum ObjectType {
     Scene,
     StartZone,
@@ -214,7 +218,7 @@ pub struct PlayerPrefabData {
 
 
 /// Calculates in relative time using the internal engine clock.
-#[derive(Default)]
+#[derive(Default, Serialize)]
 pub struct RelativeTimer {
     pub start: f64,
     pub current: f64,
@@ -512,6 +516,7 @@ impl<'a> System<'a> for ContactSystem {
     }
 }
 
+#[derive(Default, Debug, Clone, Serialize, Deserialize, new)]
 pub struct RuntimeStats {
 	pub jumps: u32,
 	pub strafes: u32,
@@ -1304,7 +1309,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
 
 
 
-pub struct GroundCheckerColliderSystem<T> {
+/*pub struct GroundCheckerColliderSystem<T> {
     pub collider_types: Vec<T>,
     narrow: SweepAndPrune3<f32>,
     broad: GJK3<f32>,
@@ -1386,7 +1391,7 @@ impl<'a, T: Component + PartialEq> System<'a> for GroundCheckerColliderSystem<T>
             grounded.ground = ground;
         }
     }
-}
+}*/
 
 
 fn main() -> amethyst::Result<()> {
@@ -1416,6 +1421,55 @@ fn main() -> amethyst::Result<()> {
     let display_config = DisplayConfig::load(&display_config_path);
 
     let key_bindings_path = asset_loader.resolve_path("config/input.ron").unwrap();
+
+
+
+    // Idea: Show states on StateMachine stack
+    // Idea: Time controls (time scale, change manually, etc) core::Time
+    // Idea: Clicking on an entity reference inside a component leads to the entity's components
+    // Idea: StateEvent<T> history with timestamps
+    // Idea: Follow EventChannel. On start, register reader id, then do the same as for StateEvent<T>
+
+    // Issue: If the resource is not present, the game will crash on launch. Solution: Option<Read<T>>
+    // issue thread '<unnamed>' panicked at 'Failed to send message: Os { code: 90, kind: Other, message: "Message too long" }', libcore/result.rs:1009:5
+    // Issue: Laggy as hell. 34 entites, 150 components
+    // Issue: thread '<unnamed>' panicked at 'Failed to send message: Os { code: 111, kind: ConnectionRefused, message: "Connection refused" }
+    //   a.k.a can't run without the editor open, which is not really convenient ^^
+
+    let editor_bundle = SyncEditorBundle::new()
+    .sync_component::<Transform>("Transform")
+    .sync_component::<BodyPose3<f32>>("BodyPose")
+    //.sync_component::<UiTransform>("UiTransform")
+    //.sync_component::<MeshData>("MeshData") // Bug: Failed to serialize
+    //.sync_component::<UiText>("UiText")
+    //.sync_component::<Removal<RemovalId>>("Removal")
+    .sync_component::<Mass3<f32>>("Mass")
+    .sync_component::<Velocity3<f32>>("Velocity")
+    .sync_component::<NextFrame<Velocity3<f32>>>("NextVelocity")
+    .sync_component::<NextFrame<BodyPose3<f32>>>("NextBodyPose")
+    .sync_component::<ObjectType>("Collider:ObjectType")
+    .sync_component::<BhopMovement3D>("BhopMovement3D")
+    .sync_component::<Player>("Player")
+    //.sync_component::<UiButton>("UiButton")
+    //.sync_component::<FlyControlTag>("FlyControlTag")
+    .sync_component::<Shape>("Shape")
+    .sync_component::<ForceAccumulator<f32, f32>>("ForceAccumulator")
+    .sync_component::<RotationControl>("RotationControl")
+    .sync_component::<Camera>("Camera")
+    //.sync_component::<Parent>("Parent")
+    .sync_component::<Light>("Light")
+    .sync_component::<Named>("Named")
+    //.sync_component::<Primitive3<f32>>("Collider:Primitive")
+    .sync_resource::<Gravity>("Gravity")
+    .sync_resource::<RelativeTimer>("RelativeTimer")
+    .sync_resource::<RuntimeProgress>("RuntimeProgress")
+    // .sync_resource::<RuntimeStats>("RuntimeStats") // Not present on game start
+    //.sync_resource::<RuntimeMap>("RuntimeMap")
+    .sync_resource::<AmbientColor>("AmbientColor")
+    //.sync_resource::<WorldParameters<f32,f32>>("WorldParameters") // Not present on game start
+    .sync_resource::<MapInfoCache>("MapInfoCache")
+    //.sync_resource::<HideCursor>("HideCursor")
+    ;
 
     let pipe = Pipeline::build().with_stage(
         Stage::with_backbuffer()
@@ -1478,7 +1532,9 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(DefaultPhysicsBundle3::<ObjectType>::new().with_spatial())?
         .with_bundle(RenderBundle::new(pipe, Some(display_config))
             //.with_visibility_sorting(&[])
-        )?;
+        )?
+        //.with_bundle(editor_bundle)?
+        ;
     let mut game = Application::build(resources_directory, InitState::default())?
         .with_resource(asset_loader)
         .with_resource(AssetLoaderInternal::<FontAsset>::new())
