@@ -12,7 +12,7 @@ amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2
 
 
 #amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
-amethyst-extra = { path = "../../amethyst-extra" }
+amethyst-extra = { path = "../amethyst-extra" }
 
 
 #amethyst-rhusics = { path = "../amethyst-rhusicshoppinworld" }
