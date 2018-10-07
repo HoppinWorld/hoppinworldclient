@@ -5,14 +5,14 @@ authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 
 [dependencies]
 
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
-amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
+amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
 #amethyst = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_gltf = { git = "https://github.com/amethyst/amethyst" }
 
 
-#amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
-amethyst-extra = { path = "../amethyst-extra" }
+amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
+#amethyst-extra = { path = "../amethyst-extra" }
 
 
 #amethyst-rhusics = { path = "../amethyst-rhusicshoppinworld" }
@@ -34,20 +34,21 @@ amethyst-editor-sync = "0.1.1"
 [patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }
 
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
 #amethyst = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_core = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
+amethyst-editor-sync = { git = "https://github.com/randomPoison/amethyst-editor-sync" }
 
 
 #collision = { git = "https://github.com/rustgd/collision-rs", features = ["serde"] }
 
 [patch.'https://github.com/amethyst/amethyst']
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "gltf2" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "bugfixes" }
 
 #[patch.'https://github.com/rustgd/rhusics']
 #rhusics-core = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }

@@ -53,6 +53,8 @@ use amethyst::utils::scene::BasicScenePrefab;
 use amethyst_gltf::*;
 use std::hash::Hash;
 
+
+use amethyst::utils::fps_counter::{FPSCounter, FPSCounterBundle};
 use amethyst::core::cgmath::{
     Basis3, Deg, EuclideanSpace, InnerSpace, Matrix3, One, Point3, Quaternion, Rotation3,
     SquareMatrix, Vector2, Vector3,
@@ -812,6 +814,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
+        info!("FPS: {}", data.world.read_resource::<FPSCounter>().sampled_fps());
+        info!("Delta: {}", data.world.read_resource::<Time>().delta_seconds());
+
         time_sync(&data.world);
         (&data.world.read_storage::<Transform>(), &data.world.read_storage::<ObjectType>()).join().filter(|t| *t.1 == ObjectType::Player).for_each(|t| info!("{:?}", t));
         data.data.update(&data.world);
@@ -1253,13 +1258,22 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();
 
+
+            let diff = if *time == 0.0{
+                0.0
+            } else {
+                *time - accum
+            };
+            if *time != 0.0 {
+                accum = *time;
+            }
+
             // Segment
             data.world.create_entity()
                 .with(UiTransform::new(String::from(""), Anchor::TopMiddle, 200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
-                .with(UiText::new(font.clone(), sec_to_display(*time - accum), [0.1,0.1,0.1,1.0], 35.0))
+                .with(UiText::new(font.clone(), sec_to_display(diff), [0.1,0.1,0.1,1.0], 35.0))
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();
-            accum = *time;
         }
     }
 
@@ -1481,6 +1495,13 @@ fn main() -> amethyst::Result<()> {
                     ALPHA,
                     Some(DepthMode::LessEqualWrite),
                 )
+                /*DrawFlatSeparate::new()
+                .with_transparency(
+                    ColorMask::all(),
+                    ALPHA,
+                    Some(DepthMode::LessEqualWrite)
+                )*/
+
             ).with_pass(DrawUi::new()),
     );
 
@@ -1533,6 +1554,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(RenderBundle::new(pipe, Some(display_config))
             //.with_visibility_sorting(&[])
         )?
+        .with_bundle(FPSCounterBundle)?
         //.with_bundle(editor_bundle)?
         ;
     let mut game = Application::build(resources_directory, InitState::default())?
@@ -1542,3 +1564,20 @@ fn main() -> amethyst::Result<()> {
     game.run();
     Ok(())
 }
+
+
+/*
+// OnClickEvent is a sub type of Event re-emitter
+// EventReemitter: fn(T) ->Vec<O>
+// OnClick:  fn(UiEvent) ->Vec<O>
+
+#[derive(Component)]
+pub struct OnClickTrans{
+    closure: fn() -> Vec<Trans<Box<State<...>>>>,
+};
+impl OnClickEvent<Trans> for OnClickTrans {
+    fn reemmit() -> Vec<Trans> {
+        self.closure()
+    }
+}
+*/
