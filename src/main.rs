@@ -21,6 +21,7 @@ extern crate amethyst_editor_sync;
 extern crate derive_builder;
 
 
+use std::sync::{Arc, Mutex};
 use amethyst_editor_sync::*;
 use amethyst_rhusics::rhusics_core::basic_collide;
 use amethyst::assets::Handle;
@@ -653,7 +654,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for InitState {
 struct MainMenuState;
 
 impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
-    fn on_start(&mut self, data: StateData<GameData>) {
+    fn on_start(&mut self, mut data: StateData<GameData>) {
         let hide_cursor = HideCursor { hide: false };
         data.world.add_resource(hide_cursor);
 
@@ -664,6 +665,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
             .world
             .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/menu_ui.ron", ()));
         add_removal_to_entity(ui_root, RemovalId::MenuUi, &data.world);
+
+        set_discord_state(String::from("Main Menu"), &mut data.world);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -708,7 +711,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
 struct MapSelectState;
 
 impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
-    fn on_start(&mut self, data: StateData<GameData>) {
+    fn on_start(&mut self, mut data: StateData<GameData>) {
         let ui_root = data.world.exec(|mut creator: UiCreator| {
             creator.create("assets/base/prefabs/map_select_ui.ron", ())
         });
@@ -740,6 +743,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
                     .build_from_world(data.world);
             add_removal_to_entity(entity, RemovalId::MapSelectUi, &data.world);
         }
+
+        set_discord_state(String::from("Main Menu"), &mut data.world);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -965,13 +970,17 @@ struct MapLoadState {
 }
 
 impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
-    fn on_start(&mut self, data: StateData<GameData>) {
+    fn on_start(&mut self, mut data: StateData<GameData>) {
         data.world.write_resource::<Time>().set_time_scale(0.0);
+
         self.init_done = false;
 
         let mut pg = ProgressCounter::new();
 
         let name = data.world.read_resource::<CurrentMap>().0.clone();
+        let display_name = data.world.read_resource::<CurrentMap>().1.name.clone();
+
+        set_discord_state(format!("Hoppin On: {}", display_name.clone()), &mut data.world);
 
         let scene_handle = data.world.exec(|loader: PrefabLoader<GltfPrefab>| {
             loader.load(
@@ -1407,6 +1416,10 @@ impl<'a, T: Component + PartialEq> System<'a> for GroundCheckerColliderSystem<T>
     }
 }*/
 
+fn init_discord_rich_presence() -> Result<DiscordRichPresence,()> {
+    DiscordRichPresence::new(498979571933380609, "Main Menu".to_string(), Some("large_image".to_string()), Some("Hoppin World".to_string()), None, None)
+}
+
 
 fn main() -> amethyst::Result<()> {
     /*
@@ -1557,10 +1570,14 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(FPSCounterBundle)?
         //.with_bundle(editor_bundle)?
         ;
-    let mut game = Application::build(resources_directory, InitState::default())?
+
+    let mut game_builder = Application::build(resources_directory, InitState::default())?
         .with_resource(asset_loader)
-        .with_resource(AssetLoaderInternal::<FontAsset>::new())
-        .build(game_data)?;
+        .with_resource(AssetLoaderInternal::<FontAsset>::new());
+    if let Ok(discord) = init_discord_rich_presence() {
+        game_builder = game_builder.with_resource(discord);
+    }
+    let mut game = game_builder.build(game_data)?;
     game.run();
     Ok(())
 }

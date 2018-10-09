@@ -14,7 +14,6 @@ amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "bugfi
 amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
 #amethyst-extra = { path = "../amethyst-extra" }
 
-
 #amethyst-rhusics = { path = "../amethyst-rhusicshoppinworld" }
 amethyst-rhusics = { git = "https://github.com/amethyst/amethyst-rhusics" }
 serde = { version = "1", features = ["serde_derive"] }
