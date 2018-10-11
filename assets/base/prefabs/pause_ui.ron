@@ -34,7 +34,7 @@ Container(
         Button(
             transform: (
                 id: "resume_button",
-                y: 92.,
+                y: 276.,
                 width: 256.,
                 height: 128.,
                 tab_order: 1,
@@ -51,6 +51,26 @@ Container(
                 //press_image: Data(Rgba((0.15, 1., 0.15, 1.), ())),
                 //hover_sound: File("audio/boop.ogg", Ogg, ()),
                 //press_sound: File("audio/confirm.ogg", Ogg, ()),
+            )
+        ),
+
+        // Retry Button
+        Button(
+            transform: (
+                id: "retry_button",
+                y: 92.,
+                width: 256.,
+                height: 128.,
+                tab_order: 1,
+                anchor: Middle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Retry",
+                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: (0.2, 0.2, 0.2, 1.0),
+                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), ())),
             )
         ),
 

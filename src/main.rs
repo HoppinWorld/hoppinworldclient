@@ -100,6 +100,7 @@ pub enum CustomStateEvent {
     // Actually a redirect to MapSelectState in this case.
     GotoMainMenu,
     MapFinished,
+    Retry,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
@@ -847,6 +848,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
             }
             StateEvent::Custom(CustomStateEvent::MapFinished) => {
                 Trans::Switch(Box::new(ResultState::default()))
+            },
+            StateEvent::Custom(CustomStateEvent::Retry) => {
+                Trans::Switch(Box::new(MapLoadState::default()))
             }
             _ => Trans::None,
         }
@@ -876,6 +880,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
             &data.world.read_storage(),
             RemovalId::GameplayUi,
         );
+        
+        // TODO for retry, can remove?
+        data.world.maintain();
     }
 }
 
@@ -910,6 +917,12 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
                 if let Some(ui_transform) = data.world.read_storage::<UiTransform>().get(entity) {
                     match &*ui_transform.id {
                         "resume_button" => Trans::Pop,
+                        "retry_button" => {
+                            data.world
+                                .write_resource::<EventChannel<CustomStateEvent>>()
+                                .single_write(CustomStateEvent::Retry);
+                            Trans::Pop
+                        }
                         "quit_button" => {
                             data.world
                                 .write_resource::<EventChannel<CustomStateEvent>>()
@@ -975,38 +988,53 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
 
         self.init_done = false;
 
-        let mut pg = ProgressCounter::new();
+        let pg = ProgressCounter::new();
 
         let name = data.world.read_resource::<CurrentMap>().0.clone();
         let display_name = data.world.read_resource::<CurrentMap>().1.name.clone();
 
         set_discord_state(format!("Hoppin On: {}", display_name.clone()), &mut data.world);
 
-        let scene_handle = data.world.exec(|loader: PrefabLoader<GltfPrefab>| {
+        let scene_handle = data.world.read_resource::<AssetLoader>()
+            .load(
+                &format!("../../{}",gltf_path_from_map(&get_working_dir(), &name)),
+                GltfSceneFormat,
+                GltfSceneOptions{
+                    flip_v_coord: true,
+                    ..Default::default()
+                },
+                &mut data.world.write_resource(),
+                &mut data.world.write_resource(),
+                &data.world.read_resource(),
+        );
+
+        /*let scene_handle = data.world.exec(|loader: PrefabLoader<GltfPrefab>| {
             loader.load(
                 gltf_path_from_map(&get_working_dir(), &name),
                 GltfSceneFormat,
-                GltfSceneOptions::default(),
-                &mut pg,
-            )
-        });
-
-        /*let player_data_handle = data.world.exec(|loader: PrefabLoader<PlayerPrefabData>| {
-            loader.load(
-                "assets/base/config/player.ron",
-                RonFormat,
-                (),
+                GltfSceneOptions{
+                    flip_v_coord: true,
+                    ..Default::default()
+                },
                 &mut pg,
             )
         });*/
+
+        if let None = scene_handle {
+            error!("Failed to load map!");
+            return;
+        }
 
         let player_settings_data = std::fs::read_to_string(format!("{}/assets/base/config/player.ron",get_working_dir())).expect("Failed to read player.ron settings file.");
         let player_settings: PlayerSettings = ron::de::from_str(&player_settings_data).expect("Failed to load player settings from file.");
 
         self.load_progress = Some(pg);
 
-        let scene_root = data.world.create_entity().with(scene_handle).build();
-        add_removal_to_entity(scene_root, RemovalId::Scene, &data.world);
+        let scene_root = data.world.create_entity()
+            .with(scene_handle.unwrap())
+            .with(Removal::new(RemovalId::Scene))
+            .build();
+        //add_removal_to_entity(scene_root, RemovalId::Scene, &data.world);
 
         data.world.add_resource(Gravity::new(Vector3::new(0.0, player_settings.gravity, 0.0)));
 
@@ -1115,7 +1143,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
-
+        if self.load_progress.is_none() {
+            return Trans::Switch(Box::new(MapSelectState::default()));
+        }
         if !self.init_done && self.load_progress.as_ref().unwrap().is_complete() {
             info!("BBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
             let entity_sizes = (
@@ -1139,7 +1169,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                 self.init_done = true;
 
                 let max_segment = {
-                	let (mut physical_parts, mut object_types, mut meshes, players) = <(MyPhysicalEntityParts, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<Player>) as SystemData>::fetch(&data.world.res);
+                	let (mut physical_parts, mut object_types, mut meshes, players, mut removals) = <(MyPhysicalEntityParts, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<Player>, WriteStorage<Removal<RemovalId>>) as SystemData>::fetch(&data.world.res);
                     for (entity, transform, mesh, name) in entity_sizes {
                         let (obj_type, coll_strat) = if name == "StartZone" {
                             // Move player to StartZone
@@ -1206,6 +1236,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
                                 PhysicalEntity::default(),
                                 Mass3::infinite(),
                             ).expect("Failed to add static collider to map mesh");
+                        removals.insert(entity, Removal::new(RemovalId::Scene)).unwrap();
                     }
 
                 	max_segment
@@ -1573,7 +1604,8 @@ fn main() -> amethyst::Result<()> {
 
     let mut game_builder = Application::build(resources_directory, InitState::default())?
         .with_resource(asset_loader)
-        .with_resource(AssetLoaderInternal::<FontAsset>::new());
+        .with_resource(AssetLoaderInternal::<FontAsset>::new())
+        .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new());
     if let Ok(discord) = init_discord_rich_presence() {
         game_builder = game_builder.with_resource(discord);
     }

@@ -9,9 +9,9 @@ PlayerSettings(
         absolute_axis: false,
         counter_impulse: false,
         accelerate_ground: 20.0,
-        accelerate_air: 50.0,
+        accelerate_air: 70.0,
         max_velocity_ground: 2.0,
-        max_velocity_air: 0.35,
+        max_velocity_air: 0.33,
         allow_projection_acceleration: true,
     ),
     ground_friction: GroundFriction3D(
