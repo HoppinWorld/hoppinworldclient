@@ -1,4 +1,6 @@
+#[macro_use]
 extern crate amethyst;
+extern crate amethyst_core;
 extern crate amethyst_extra;
 extern crate amethyst_gltf;
 extern crate amethyst_rhusics;
@@ -16,6 +18,11 @@ extern crate ron;
 extern crate uuid;
 extern crate hoppinworlddata;
 extern crate amethyst_editor_sync;
+extern crate hyper;
+extern crate hyper_tls;
+extern crate tokio;
+extern crate tokio_executor;
+
 
 #[macro_use]
 extern crate derive_builder;
@@ -38,7 +45,7 @@ use amethyst::controls::{
     CursorHideSystem, FlyControlTag, HideCursor, MouseFocusUpdateSystem, WindowFocus,
 };
 use amethyst::core::transform::{Parent, Transform, TransformBundle};
-use amethyst::core::{Named, Time};
+use amethyst::core::{EventReader, Named, Time};
 use amethyst::ecs::error::Error as ECSError;
 use amethyst::ecs::prelude::ParallelIterator;
 use amethyst::ecs::{
@@ -76,6 +83,11 @@ use partial_function::*;
 use std::marker::PhantomData;
 use uuid::Uuid;
 use winit::DeviceEvent;
+use std::io::{self, Write as StdWrite};
+use hyper::{Body, Client, Request};
+use hyper_tls::HttpsConnector;
+use tokio::prelude::{Future, Stream};
+use tokio::runtime::Runtime;
 
 type ScenePrefab = BasicScenePrefab<Vec<PosNormTex>>;
 type Shape = CollisionShape<Primitive3<f32>, BodyPose3<f32>, Aabb3<f32>, ObjectType>;
@@ -91,9 +103,17 @@ type DefaultPhysicalEntityParts<'a, T> = PhysicalEntityParts<
     BodyPose3<f32>,
 >;
 type MyPhysicalEntityParts<'a> = DefaultPhysicalEntityParts<'a, ObjectType>;
-type CustomTrans<'a, 'b> = Trans<GameData<'a, 'b>, CustomStateEvent>;
+type CustomTrans<'a, 'b> = Trans<GameData<'a, 'b>, AllEvents>;
 
 const DISPLAY_SPEED_MULTIPLIER: f32 = 50.0;
+
+#[derive(Clone, EventReader)]
+#[reader(AllEventsReader)]
+pub enum AllEvents {
+    Window(Event),
+    Ui(UiEvent),
+    Custom(CustomStateEvent),
+}
 
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum CustomStateEvent {
@@ -111,6 +131,7 @@ pub enum RemovalId {
     PauseUi,
     ResultUi,
     MapSelectUi,
+    LoginUi,
 }
 
 #[repr(u8)]
@@ -633,35 +654,125 @@ pub fn add_removal_to_entity(entity: Entity, id: RemovalId, world: &World) {
 #[derive(Default)]
 struct InitState;
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for InitState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
     fn on_start(&mut self, data: StateData<GameData>) {
         data.world.register::<ObjectType>();
         data.world.register::<Removal<RemovalId>>();
         data.world.add_resource(get_all_maps(&get_working_dir()));
         data.world.add_resource(AmbientColor(Rgba::from([0.1; 3])));
+        let hide_cursor = HideCursor { hide: false };
+        data.world.add_resource(hide_cursor);
 
         let mut world_param = WorldParameters::new(-Vector3::<f32>::unit_y());
         world_param = world_param.with_damping(1.0);
         data.world.add_resource(world_param);
+
+        //let mut runtime = Arc::new(Mutex::new(Runtime::new().expect("Failed to create tokio runtime")));
+        let runtime = Runtime::new().expect("Failed to create tokio runtime");
+        data.world.add_resource(runtime);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
+        //Trans::Switch(Box::new(LoginState))
         Trans::Switch(Box::new(MainMenuState))
     }
 }
 
 #[derive(Default)]
+struct LoginState;
+
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
+    fn on_start(&mut self, mut data: StateData<GameData>) {
+        let ui_root = data
+            .world
+            .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/login_ui.ron", ()));
+        add_removal_to_entity(ui_root, RemovalId::LoginUi, &data.world);
+
+        set_discord_state(String::from("Login"), &mut data.world);
+    }
+
+    fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
+        data.data.update(&data.world);
+        Trans::None
+    }
+
+    fn handle_event(
+        &mut self,
+        data: StateData<GameData>,
+        event: AllEvents,
+    ) -> CustomTrans<'a, 'b> {
+        match event {
+            AllEvents::Ui(UiEvent {
+                event_type: UiEventType::Click,
+                target: entity,
+            }) => {
+                if let Some(ui_transform_id) = data.world.read_storage::<UiTransform>().get(entity).map(|tr| tr.id.clone()) {
+                    match &*ui_transform_id {
+                        "login_button" => {
+                            do_login(&mut data.world.write_resource::<Runtime>(), "username".to_string(), "password".to_string());
+                            Trans::None
+                        },
+                        "quit_button" => Trans::Quit,
+                        _ => Trans::None,
+                    }
+                } else {
+                    Trans::None
+                }
+            }
+            _ => Trans::None,
+        }
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData>) {
+        exec_removal(
+            &data.world.entities(),
+            &data.world.read_storage(),
+            RemovalId::MenuUi,
+        );
+    }
+}
+
+pub fn do_login(future_runtime: &mut Runtime, username: String, password: String) {
+    let https = HttpsConnector::new(4).expect("TLS initialization failed");
+    let client = Client::builder().build::<_, hyper::Body>(https);
+    let request = Request::post("http://127.0.0.1:27015/login")
+        .header("Content-Type", "application/json")
+        .body(Body::from("{\"email\":\"test@test.com\", \"password\":\"bob123\"}"))
+        .unwrap();
+    let future = client
+        // Fetch the url...
+        .request(request)
+        // And then, if we get a response back...
+        .and_then(|res| {
+            println!("Response: {}", res.status());
+            println!("Headers: {:#?}", res.headers());
+
+            // The body is a stream, and for_each returns a new Future
+            // when the stream is finished, and calls the closure on
+            // each chunk of the body...
+            res.into_body().for_each(|chunk| {
+                io::stdout().write_all(&chunk)
+                    .map_err(|e| panic!("example expects stdout is open, error={}", e))
+            })
+        })
+        // If all good, just tell the user...
+        .map(|_| {
+            println!("\n\nDone.");
+        })
+        // If there was an error, let the user know...
+        .map_err(|err| {
+            eprintln!("Error {}", err);
+        });
+    future_runtime.spawn(future);
+    //runtime.shutdown_on_idle().wait().unwrap();
+}
+
+#[derive(Default)]
 struct MainMenuState;
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MainMenuState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
-        let hide_cursor = HideCursor { hide: false };
-        data.world.add_resource(hide_cursor);
-
-        data.world.register::<ObjectType>();
-        data.world.register::<Removal<RemovalId>>();
-
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/menu_ui.ron", ()));
@@ -678,10 +789,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
     fn handle_event(
         &mut self,
         data: StateData<GameData>,
-        event: StateEvent<CustomStateEvent>,
+        event: AllEvents,
     ) -> CustomTrans<'a, 'b> {
         match event {
-            StateEvent::Ui(UiEvent {
+            AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,
                 target: entity,
             }) => {
@@ -711,7 +822,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MainMenuState {
 #[derive(Default)]
 struct MapSelectState;
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
         let ui_root = data.world.exec(|mut creator: UiCreator| {
             creator.create("assets/base/prefabs/map_select_ui.ron", ())
@@ -756,11 +867,11 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
     fn handle_event(
         &mut self,
         data: StateData<GameData>,
-        event: StateEvent<CustomStateEvent>,
+        event: AllEvents,
     ) -> CustomTrans<'a, 'b> {
         let mut change_map = None;
         match event {
-            StateEvent::Ui(UiEvent {
+            AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,
                 target: entity,
             }) => {
@@ -786,7 +897,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
                     }
                 }
             }
-            StateEvent::Window(ev) => {
+            AllEvents::Window(ev) => {
                 if is_key_down(&ev, VirtualKeyCode::Escape) {
                     return Trans::Switch(Box::new(MainMenuState::default()));
                 }
@@ -813,7 +924,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapSelectState {
 #[derive(Default)]
 struct GameplayState;
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for GameplayState {
     fn on_start(&mut self, data: StateData<GameData>) {
         data.world.write_resource::<HideCursor>().hide = true;
         data.world.write_resource::<Time>().set_time_scale(1.0);
@@ -832,24 +943,24 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
     fn handle_event(
         &mut self,
         _data: StateData<GameData>,
-        event: StateEvent<CustomStateEvent>,
+        event: AllEvents,
     ) -> CustomTrans<'a, 'b> {
         // TODO: Map finished
         match event {
-            StateEvent::Window(ev) => {
+            AllEvents::Window(ev) => {
                 if is_key_down(&ev, VirtualKeyCode::Escape) {
                     Trans::Push(Box::new(PauseMenuState::default()))
                 } else {
                     Trans::None
                 }
             }
-            StateEvent::Custom(CustomStateEvent::GotoMainMenu) => {
+            AllEvents::Custom(CustomStateEvent::GotoMainMenu) => {
                 Trans::Switch(Box::new(MapSelectState::default()))
             }
-            StateEvent::Custom(CustomStateEvent::MapFinished) => {
+            AllEvents::Custom(CustomStateEvent::MapFinished) => {
                 Trans::Switch(Box::new(ResultState::default()))
             },
-            StateEvent::Custom(CustomStateEvent::Retry) => {
+            AllEvents::Custom(CustomStateEvent::Retry) => {
                 Trans::Switch(Box::new(MapLoadState::default()))
             }
             _ => Trans::None,
@@ -889,7 +1000,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for GameplayState {
 #[derive(Default)]
 struct PauseMenuState;
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for PauseMenuState {
     fn on_start(&mut self, data: StateData<GameData>) {
         let ui_root = data
             .world
@@ -907,10 +1018,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
     fn handle_event(
         &mut self,
         data: StateData<GameData>,
-        event: StateEvent<CustomStateEvent>,
+        event: AllEvents,
     ) -> CustomTrans<'a, 'b> {
         match event {
-            StateEvent::Ui(UiEvent {
+            AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,
                 target: entity,
             }) => {
@@ -935,7 +1046,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for PauseMenuState {
                     Trans::None
                 }
             }
-            StateEvent::Window(ev) => {
+            AllEvents::Window(ev) => {
                 if is_key_down(&ev, VirtualKeyCode::Escape) {
                     Trans::Pop
                 } else {
@@ -982,7 +1093,7 @@ struct MapLoadState {
     init_done: bool,
 }
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
         data.world.write_resource::<Time>().set_time_scale(0.0);
 
@@ -1260,7 +1371,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for MapLoadState {
 #[derive(Default)]
 struct ResultState;
 
-impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
+impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
     fn on_start(&mut self, data: StateData<GameData>) {
         let ui_root = data
             .world
@@ -1325,10 +1436,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
     fn handle_event(
         &mut self,
         data: StateData<GameData>,
-        event: StateEvent<CustomStateEvent>,
+        event: AllEvents,
     ) -> CustomTrans<'a, 'b> {
         match event {
-            StateEvent::Ui(UiEvent {
+            AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,
                 target: entity,
             }) => {
@@ -1341,7 +1452,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, CustomStateEvent> for ResultState {
                     Trans::None
                 }
             }
-            StateEvent::Window(ev) => {
+            AllEvents::Window(ev) => {
                 if is_key_down(&ev, VirtualKeyCode::Escape) {
                     Trans::Switch(Box::new(MapSelectState::default()))
                 } else {
@@ -1497,10 +1608,10 @@ fn main() -> amethyst::Result<()> {
     let editor_bundle = SyncEditorBundle::new()
     .sync_component::<Transform>("Transform")
     .sync_component::<BodyPose3<f32>>("BodyPose")
-    //.sync_component::<UiTransform>("UiTransform")
+    .sync_component::<UiTransform>("UiTransform")
     //.sync_component::<MeshData>("MeshData") // Bug: Failed to serialize
-    //.sync_component::<UiText>("UiText")
-    //.sync_component::<Removal<RemovalId>>("Removal")
+    .sync_component::<UiText>("UiText")
+    .sync_component::<Removal<RemovalId>>("Removal")
     .sync_component::<Mass3<f32>>("Mass")
     .sync_component::<Velocity3<f32>>("Velocity")
     .sync_component::<NextFrame<Velocity3<f32>>>("NextVelocity")
@@ -1508,8 +1619,8 @@ fn main() -> amethyst::Result<()> {
     .sync_component::<ObjectType>("Collider:ObjectType")
     .sync_component::<BhopMovement3D>("BhopMovement3D")
     .sync_component::<Player>("Player")
-    //.sync_component::<UiButton>("UiButton")
-    //.sync_component::<FlyControlTag>("FlyControlTag")
+    .sync_component::<UiButton>("UiButton")
+    .sync_component::<FlyControlTag>("FlyControlTag")
     .sync_component::<Shape>("Shape")
     .sync_component::<ForceAccumulator<f32, f32>>("ForceAccumulator")
     .sync_component::<RotationControl>("RotationControl")
@@ -1521,12 +1632,12 @@ fn main() -> amethyst::Result<()> {
     .sync_resource::<Gravity>("Gravity")
     .sync_resource::<RelativeTimer>("RelativeTimer")
     .sync_resource::<RuntimeProgress>("RuntimeProgress")
-    // .sync_resource::<RuntimeStats>("RuntimeStats") // Not present on game start
+    //.sync_resource::<RuntimeStats>("RuntimeStats") // Not present on game start
     //.sync_resource::<RuntimeMap>("RuntimeMap")
     .sync_resource::<AmbientColor>("AmbientColor")
     //.sync_resource::<WorldParameters<f32,f32>>("WorldParameters") // Not present on game start
     .sync_resource::<MapInfoCache>("MapInfoCache")
-    //.sync_resource::<HideCursor>("HideCursor")
+    .sync_resource::<HideCursor>("HideCursor")
     ;
 
     let pipe = Pipeline::build().with_stage(
@@ -1599,10 +1710,10 @@ fn main() -> amethyst::Result<()> {
             //.with_visibility_sorting(&[])
         )?
         .with_bundle(FPSCounterBundle)?
-        //.with_bundle(editor_bundle)?
+        .with_bundle(editor_bundle)?
         ;
 
-    let mut game_builder = Application::build(resources_directory, InitState::default())?
+    let mut game_builder = CoreApplication::<_, AllEvents, AllEventsReader>::build(resources_directory, InitState::default())?
         .with_resource(asset_loader)
         .with_resource(AssetLoaderInternal::<FontAsset>::new())
         .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new());

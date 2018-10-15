@@ -8,7 +8,7 @@ Container(
         height: 20.,
     ),
     background: (
-        image: Data(Rgba((1.0, 1.0, 1.0, 1.0), ())),
+        image: Data(Rgba((1.0, 1.0, 1.0, 1.0), (channel: Srgb))),
     ),
     children: [
         // Title
@@ -45,7 +45,7 @@ Container(
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
                 normal_text_color: (0.2, 0.2, 0.2, 1.0),
-                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), ())),
+                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), (channel: Srgb))),
                 //hover_image: Data(Rgba((0.3, 1., 0.3, 1.), ())),
                 //press_image: Data(Rgba((0.15, 1., 0.15, 1.), ())),
                 //hover_sound: File("audio/boop.ogg", Ogg, ()),
@@ -69,7 +69,7 @@ Container(
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
                 normal_text_color: (0.2, 0.2, 0.2, 1.0),
-                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), ())),
+                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), (channel: Srgb))),
             )
         ),
     ]

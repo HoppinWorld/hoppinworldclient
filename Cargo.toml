@@ -5,11 +5,21 @@ authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 
 [dependencies]
 
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+amethyst = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_gltf = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_core = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+
+#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+#amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+
 #amethyst = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_gltf = { git = "https://github.com/amethyst/amethyst" }
 
+hyper = "0.12.11"
+hyper-tls = "0.3.1"
+
+tokio = "0.1.7"
+tokio-executor = "0.1.0"
 
 amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
 #amethyst-extra = { path = "../amethyst-extra" }
@@ -28,14 +38,20 @@ ron = "0.4"
 
 hoppinworlddata = { git = "https://github.com/hoppinworld/data" }
 
-amethyst-editor-sync = "0.1.1"
+amethyst-editor-sync = "0.2"
 
 [patch.crates-io]
 #specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }
 
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+amethyst = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_core = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_assets = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_renderer = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+
+#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+#amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+#amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+
 #amethyst = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_core = { git = "https://github.com/amethyst/amethyst" }
 #amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
@@ -45,9 +61,14 @@ amethyst-editor-sync = { git = "https://github.com/randomPoison/amethyst-editor-
 #collision = { git = "https://github.com/rustgd/collision-rs", features = ["serde"] }
 
 [patch.'https://github.com/amethyst/amethyst']
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+#amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+#amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
+
+amethyst = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_core = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_assets = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
+amethyst_renderer = { git = "https://github.com/rhuagh/amethyst", branch = "feature/event-reader" }
 
 #[patch.'https://github.com/rustgd/rhusics']
 #rhusics-core = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }

@@ -2,7 +2,6 @@
 Container(
     transform: (
         id: "all",
-        z: 1.,
         anchor: Middle,
         stretch: XY( x_margin: 0., y_margin: 0.),
         width: 20.,
@@ -23,19 +22,19 @@ Container(
                 anchor: TopMiddle,
             ),
             text: (
-                text: "Map Select",
+                text: "HoppinWorld",
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 80.,
                 color: (0.2, 0.2, 0.2, 1.0),
             )
         ),
 
-        // Back Button
-        // Goes back to main menu
+        // Login Button
         Button(
             transform: (
-                id: "back_button",
-                y: -92.,
+                id: "login_button",
+                x: -192.,
+                y: -300.,
                 width: 256.,
                 height: 128.,
                 tab_order: 1,
@@ -43,7 +42,32 @@ Container(
                 mouse_reactive: true,
             ),
             button: (
-                text: "Back",
+                text: "Login",
+                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: (0.2, 0.2, 0.2, 1.0),
+                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), (channel: Srgb))),
+                //hover_image: Data(Rgba((0.3, 1., 0.3, 1.), ())),
+                //press_image: Data(Rgba((0.15, 1., 0.15, 1.), ())),
+                //hover_sound: File("audio/boop.ogg", Ogg, ()),
+                //press_sound: File("audio/confirm.ogg", Ogg, ()),
+            )
+        ),
+
+        // Quit Button
+        Button(
+            transform: (
+                id: "quit_button",
+                x: 192.,
+                y: -300.,
+                width: 256.,
+                height: 128.,
+                tab_order: 1,
+                anchor: Middle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Quit",
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
                 normal_text_color: (0.2, 0.2, 0.2, 1.0),

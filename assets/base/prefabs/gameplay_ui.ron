@@ -17,7 +17,7 @@ Container(
                 anchor: BottomMiddle,
             ),
             background: (
-                image: Data(Rgba((0.09, 0.02, 0.25, 1.0), ())),
+                image: Data(Rgba((0.09, 0.02, 0.25, 1.0), (channel: Srgb))),
             ),
             children: [
                 Image(
@@ -28,7 +28,7 @@ Container(
                         anchor: Middle,
                     ),
                     image: (
-                        image: Data(Rgba((0.18, 0.05, 0.85, 1.0), ())),
+                        image: Data(Rgba((0.18, 0.05, 0.85, 1.0), (channel: Srgb))),
                     )
                 ),
             ]
