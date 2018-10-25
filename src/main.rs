@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate amethyst;
-extern crate amethyst_core;
+//extern crate amethyst_core;
 extern crate amethyst_extra;
 extern crate amethyst_gltf;
 extern crate amethyst_rhusics;
@@ -17,7 +17,7 @@ extern crate specs_derive;
 extern crate ron;
 extern crate uuid;
 extern crate hoppinworlddata;
-extern crate amethyst_editor_sync;
+//extern crate amethyst_editor_sync;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate tokio;
@@ -29,7 +29,7 @@ extern crate derive_builder;
 
 
 use std::sync::{Arc, Mutex};
-use amethyst_editor_sync::*;
+//use amethyst_editor_sync::*;
 use amethyst_rhusics::rhusics_core::basic_collide;
 use amethyst::assets::Handle;
 use amethyst::utils::removal::Removal;
@@ -86,7 +86,7 @@ use winit::DeviceEvent;
 use std::io::{self, Write as StdWrite};
 use hyper::{Body, Client, Request};
 use hyper_tls::HttpsConnector;
-use tokio::prelude::{Future, Stream};
+use tokio::prelude::{Future, Async, Stream};
 use tokio::runtime::Runtime;
 
 type ScenePrefab = BasicScenePrefab<Vec<PosNormTex>>;
@@ -211,6 +211,11 @@ pub struct PlayerPrefabData {
     shape: Primitive3<f32>,
     physical_entity: PhysicalEntity<f32>,
     mass: Mass3<f32>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Auth {
+    token: String,
 }
 
 /*impl<'a> PrefabData<'a> for PlayerPrefabData {
@@ -675,7 +680,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
         //Trans::Switch(Box::new(LoginState))
-        Trans::Switch(Box::new(MainMenuState))
+        Trans::Switch(Box::new(LoginState))
     }
 }
 
@@ -738,20 +743,20 @@ pub fn do_login(future_runtime: &mut Runtime, username: String, password: String
     let client = Client::builder().build::<_, hyper::Body>(https);
     let request = Request::post("http://127.0.0.1:27015/login")
         .header("Content-Type", "application/json")
-        .body(Body::from("{\"email\":\"test@test.com\", \"password\":\"bob123\"}"))
+        .body(Body::from(format!("{{\"email\":\"{}\", \"password\":\"{}\"}}", username, password)))
         .unwrap();
-    let future = client
+    let mut future = client
         // Fetch the url...
         .request(request)
         // And then, if we get a response back...
-        .and_then(|res| {
-            println!("Response: {}", res.status());
-            println!("Headers: {:#?}", res.headers());
+        .and_then(|result| {
+            println!("Response: {}", result.status());
+            println!("Headers: {:#?}", result.headers());
 
             // The body is a stream, and for_each returns a new Future
             // when the stream is finished, and calls the closure on
             // each chunk of the body...
-            res.into_body().for_each(|chunk| {
+            result.into_body().for_each(|chunk| {
                 io::stdout().write_all(&chunk)
                     .map_err(|e| panic!("example expects stdout is open, error={}", e))
             })
@@ -765,6 +770,12 @@ pub fn do_login(future_runtime: &mut Runtime, username: String, password: String
             eprintln!("Error {}", err);
         });
     future_runtime.spawn(future);
+    while let Ok(Async::NotReady) = future.poll() {
+        println!("POLLING");
+    }
+    println!("Done");
+    //future_runtime.spawn(future);
+
     //runtime.shutdown_on_idle().wait().unwrap();
 }
 
@@ -1605,7 +1616,7 @@ fn main() -> amethyst::Result<()> {
     // Issue: thread '<unnamed>' panicked at 'Failed to send message: Os { code: 111, kind: ConnectionRefused, message: "Connection refused" }
     //   a.k.a can't run without the editor open, which is not really convenient ^^
 
-    let editor_bundle = SyncEditorBundle::new()
+    /*let editor_bundle = SyncEditorBundle::new()
     .sync_component::<Transform>("Transform")
     .sync_component::<BodyPose3<f32>>("BodyPose")
     .sync_component::<UiTransform>("UiTransform")
@@ -1638,7 +1649,7 @@ fn main() -> amethyst::Result<()> {
     //.sync_resource::<WorldParameters<f32,f32>>("WorldParameters") // Not present on game start
     .sync_resource::<MapInfoCache>("MapInfoCache")
     .sync_resource::<HideCursor>("HideCursor")
-    ;
+    ;*/
 
     let pipe = Pipeline::build().with_stage(
         Stage::with_backbuffer()
@@ -1710,7 +1721,7 @@ fn main() -> amethyst::Result<()> {
             //.with_visibility_sorting(&[])
         )?
         .with_bundle(FPSCounterBundle)?
-        .with_bundle(editor_bundle)?
+        //.with_bundle(editor_bundle)?
         ;
 
     let mut game_builder = CoreApplication::<_, AllEvents, AllEventsReader>::build(resources_directory, InitState::default())?
