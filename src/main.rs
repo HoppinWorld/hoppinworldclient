@@ -6,6 +6,7 @@ extern crate amethyst_gltf;
 extern crate amethyst_rhusics;
 #[macro_use]
 extern crate serde;
+extern crate serde_json;
 #[macro_use]
 extern crate log;
 extern crate partial_function;
@@ -118,6 +119,7 @@ pub enum AllEvents {
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum CustomStateEvent {
     // Actually a redirect to MapSelectState in this case.
+    // TODO: Remove once TransQueue hits live
     GotoMainMenu,
     MapFinished,
     Retry,
@@ -217,35 +219,6 @@ pub struct PlayerPrefabData {
 pub struct Auth {
     token: String,
 }
-
-/*impl<'a> PrefabData<'a> for PlayerPrefabData {
-    type SystemData = (
-        <WriteStorage<'a, Grounded> as PrefabData<'a>>::SystemData,
-        <WriteStorage<'a, BhopMovement3D> as PrefabData<'a>>::SystemData,
-        <WriteStorage<'a, GroundFriction3D> as PrefabData<'a>>::SystemData,
-        <Write<'a, PlayerSettings> as PrefabData<'a>>::SystemData,
-    );
-    type Result = ();
-
-    fn load_prefab(
-        &self,
-        entity: Entity,
-        system_data: &mut Self::SystemData,
-        _entities: &[Entity],
-    ) -> Result<(), ECSError> {
-        let (ref mut groundeds, ref mut movements, ref mut frictions, ref mut player_settings) = system_data;
-        println!("STUFF GOING ON!");
-
-        groundeds.insert(entity, self.grounded.clone())?;
-        movements.insert(entity, self.movement.clone())?;
-        frictions.insert(entity, self.ground_friction.clone())?;
-        player_settings.shape = self.shape.clone();
-        player_settings.physical_entity = self.physical_entity.clone();
-        player_settings.mass = self.mass.clone();
-        Ok(())
-    }
-}*/
-
 
 /// Calculates in relative time using the internal engine clock.
 #[derive(Default, Serialize)]
@@ -665,6 +638,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
         data.world.register::<Removal<RemovalId>>();
         data.world.add_resource(get_all_maps(&get_working_dir()));
         data.world.add_resource(AmbientColor(Rgba::from([0.1; 3])));
+        data.world.add_resource(FutureProcessor::default());
         let hide_cursor = HideCursor { hide: false };
         data.world.add_resource(hide_cursor);
 
@@ -697,8 +671,26 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
         set_discord_state(String::from("Login"), &mut data.world);
     }
 
-    fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
+
+        loop {
+            let myfn = {
+                let mut res = data.world.write_resource::<FutureProcessor>();
+                let mut queue_locked = res.queue.lock().unwrap();
+                let thefn = queue_locked.pop_front();
+                thefn
+            };
+            if let Some(f) = myfn {
+                f(&mut data.world);
+            }else{
+                break;
+            }
+        }
+
+        /*while let Some(f) = data.world.write_resource::<FutureProcessor>().queue.lock().unwrap().pop_front() {
+            f(&mut data.world);
+        }*/
         Trans::None
     }
 
@@ -715,7 +707,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                 if let Some(ui_transform_id) = data.world.read_storage::<UiTransform>().get(entity).map(|tr| tr.id.clone()) {
                     match &*ui_transform_id {
                         "login_button" => {
-                            do_login(&mut data.world.write_resource::<Runtime>(), "username".to_string(), "password".to_string());
+                            do_login(&mut data.world.write_resource::<Runtime>(), &data.world.read_resource(), "jojolepromain@gmail.com".to_string(), "".to_string());
                             Trans::None
                         },
                         "quit_button" => Trans::Quit,
@@ -738,43 +730,77 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
     }
 }
 
-pub fn do_login(future_runtime: &mut Runtime, username: String, password: String) {
+/*pub struct FutureProcessor<'a, F> where F: SystemData<'a> {
+    pub queue: Arc<Mutex<VecDeque<Box<Fn(F)>>>>,
+    pub phantom: &'a PhantomData<()>,
+}*/
+
+type FutureQueue = Arc<Mutex<VecDeque<Box<Fn(&mut World) + Send>>>>;
+
+/// Resource holding the queue of results functions.
+/// Filled when a Future finishes its work (or fails).
+/// Emptied by the amethyst main loop.
+#[derive(Default)]
+pub struct FutureProcessor {
+    pub queue: FutureQueue,
+}
+
+impl FutureProcessor {
+    pub fn queue_ref(&self) -> FutureQueue {
+        self.queue.clone()
+    }
+}
+
+pub fn do_login(future_runtime: &mut Runtime, queue: &FutureProcessor, username: String, password: String) {
     let https = HttpsConnector::new(4).expect("TLS initialization failed");
     let client = Client::builder().build::<_, hyper::Body>(https);
-    let request = Request::post("http://127.0.0.1:27015/login")
+    let request = Request::post("https://hoppinworld.net:27015/login")
         .header("Content-Type", "application/json")
         .body(Body::from(format!("{{\"email\":\"{}\", \"password\":\"{}\"}}", username, password)))
         .unwrap();
-    let mut future = client
+
+    let queue_ref = queue.queue_ref();
+    let future = client
         // Fetch the url...
         .request(request)
         // And then, if we get a response back...
-        .and_then(|result| {
+        .and_then(move |result| {
             println!("Response: {}", result.status());
             println!("Headers: {:#?}", result.headers());
 
             // The body is a stream, and for_each returns a new Future
             // when the stream is finished, and calls the closure on
             // each chunk of the body...
-            result.into_body().for_each(|chunk| {
-                io::stdout().write_all(&chunk)
-                    .map_err(|e| panic!("example expects stdout is open, error={}", e))
+            result.into_body().for_each(move |chunk| {
+                /*io::stdout().write_all(&chunk)
+                    .map_err(|e| panic!("example expects stdout is open, error={}", e))*/
+                match serde_json::from_slice::<Auth>(&chunk) {
+                    Ok(a) => queue_ref.lock().unwrap().push_back(Box::new(move |world| {
+                        world.add_resource(a.clone());
+                    })),
+                    Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
+                }
+                Ok(())
             })
+            //serde_json::from_slice::<Auth>(result.into_body())
         })
         // If all good, just tell the user...
-        .map(|_| {
+        .map(move |_| {
             println!("\n\nDone.");
+            /*queue_ref.lock().unwrap().push_back(Box::new(move |world| {
+                world.add_resource(auth);
+            }));*/
         })
         // If there was an error, let the user know...
         .map_err(|err| {
             eprintln!("Error {}", err);
         });
-    future_runtime.spawn(future);
-    while let Ok(Async::NotReady) = future.poll() {
+    //tokio::run(future);
+    /*while let Ok(Async::NotReady) = future.poll() {
         println!("POLLING");
-    }
-    println!("Done");
-    //future_runtime.spawn(future);
+    }*/
+    //println!("Done");
+    future_runtime.spawn(future);
 
     //runtime.shutdown_on_idle().wait().unwrap();
 }
