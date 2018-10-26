@@ -29,6 +29,81 @@ Container(
             )
         ),
 
+        // Username field
+        Container(
+            transform: (
+                id: "username_container",
+                y: 75.,
+                width: 1000.,
+                height: 75.,
+                tab_order: 1,
+                anchor: Middle,
+            ),
+            background: (
+                image: Data(Rgba((0.09, 0.02, 0.25, 1.0), (channel: Srgb))),
+            ),
+            children: [
+                Text(
+                    transform: (
+                        id: "username",
+                        width: 1000.,
+                        height: 75.,
+                        tab_order: 1,
+                        anchor: Middle,
+                        stretch: XY(x_margin: 0., y_margin: 0.),
+                    ),
+                    text: (
+                        text: "Username",
+                        font: File("assets/base/font/arial.ttf", Ttf, ()),
+                        font_size: 45.,
+                        color: (0.2, 0.2, 1.0, 1.0),
+                        align: Middle,
+                        editable: (
+                            max_length: 64,
+                        ),
+                    )
+                ),
+            ]
+        ),
+
+        // Password field
+        Container(
+            transform: (
+                id: "password_container",
+                y: -75.,
+                width: 1000.,
+                height: 75.,
+                tab_order: 1,
+                anchor: Middle,
+            ),
+            background: (
+                image: Data(Rgba((0.09, 0.02, 0.25, 1.0), (channel: Srgb))),
+            ),
+            children: [
+                Text(
+                    transform: (
+                        id: "password",
+                        width: 1000.,
+                        height: 75.,
+                        tab_order: 1,
+                        anchor: Middle,
+                        stretch: XY(x_margin: 0., y_margin: 0.),
+                    ),
+                    text: (
+                        text: "pass",
+                        font: File("assets/base/font/arial.ttf", Ttf, ()),
+                        font_size: 45.,
+                        color: (0.2, 0.2, 1.0, 1.0),
+                        align: Middle,
+                        password: true,
+                        editable: (
+                            max_length: 64,
+                        ),
+                    )
+                ),
+            ]
+        ),
+
         // Login Button
         Button(
             transform: (
@@ -37,7 +112,7 @@ Container(
                 y: -300.,
                 width: 256.,
                 height: 128.,
-                tab_order: 1,
+                tab_order: 3,
                 anchor: Middle,
                 mouse_reactive: true,
             ),
@@ -62,7 +137,7 @@ Container(
                 y: -300.,
                 width: 256.,
                 height: 128.,
-                tab_order: 1,
+                tab_order: 4,
                 anchor: Middle,
                 mouse_reactive: true,
             ),

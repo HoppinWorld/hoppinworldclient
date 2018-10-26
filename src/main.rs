@@ -688,6 +688,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
             }
         }
 
+        if let Some(_) = data.world.res.try_fetch::<Auth>() {
+            return Trans::Switch(Box::new(MainMenuState::default()));
+        }
+
         /*while let Some(f) = data.world.write_resource::<FutureProcessor>().queue.lock().unwrap().pop_front() {
             f(&mut data.world);
         }*/
@@ -707,7 +711,11 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                 if let Some(ui_transform_id) = data.world.read_storage::<UiTransform>().get(entity).map(|tr| tr.id.clone()) {
                     match &*ui_transform_id {
                         "login_button" => {
-                            do_login(&mut data.world.write_resource::<Runtime>(), &data.world.read_resource(), "jojolepromain@gmail.com".to_string(), "".to_string());
+                            let username_entity = UiFinder::fetch(&data.world.res).find("username").unwrap();
+                            let username = data.world.read_storage::<UiText>().get(username_entity).unwrap().text.clone();
+                            let password_entity = UiFinder::fetch(&data.world.res).find("password").unwrap();
+                            let password = data.world.read_storage::<UiText>().get(password_entity).unwrap().text.clone();
+                            do_login(&mut data.world.write_resource::<Runtime>(), &data.world.read_resource(), username, password);
                             Trans::None
                         },
                         "quit_button" => Trans::Quit,
@@ -725,7 +733,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
         exec_removal(
             &data.world.entities(),
             &data.world.read_storage(),
-            RemovalId::MenuUi,
+            RemovalId::LoginUi,
         );
     }
 }
