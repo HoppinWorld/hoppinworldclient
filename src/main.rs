@@ -90,7 +90,7 @@ use hyper_tls::HttpsConnector;
 use tokio::prelude::{Future, Async, Stream};
 use tokio::runtime::Runtime;
 
-type ScenePrefab = BasicScenePrefab<Vec<PosNormTex>>;
+type ScenePrefab = BasicScenePrefab<Vec<PosNormTangTex>>;
 type Shape = CollisionShape<Primitive3<f32>, BodyPose3<f32>, Aabb3<f32>, ObjectType>;
 type DefaultPhysicalEntityParts<'a, T> = PhysicalEntityParts<
     'a,
@@ -654,7 +654,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
         //Trans::Switch(Box::new(LoginState))
-        Trans::Switch(Box::new(LoginState))
+        Trans::Switch(Box::new(MainMenuState))
     }
 }
 
