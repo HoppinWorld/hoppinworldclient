@@ -5,18 +5,9 @@ authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 
 [dependencies]
 
-#amethyst = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_gltf = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_core = { git = "https://github.com/amethyst/amethyst" }
-
-amethyst = "0.9"
-amethyst_gltf = "0.4"
-
-#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-#amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-
-#amethyst = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_gltf = { git = "https://github.com/amethyst/amethyst" }
+amethyst = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_gltf = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_core = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
 
 hyper = "0.12.11"
 hyper-tls = "0.3.1"
@@ -25,10 +16,8 @@ tokio = "0.1.7"
 tokio-executor = "0.1.0"
 
 amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
-#amethyst-extra = { path = "../amethyst-extra" }
-
-#amethyst-rhusics = { path = "../amethyst-rhusicshoppinworld" }
 amethyst-rhusics = { git = "https://github.com/amethyst/amethyst-rhusics" }
+
 serde = { version = "1", features = ["serde_derive"] }
 log = "0.4"
 winit = "0.17.0"
@@ -44,41 +33,21 @@ hoppinworlddata = { git = "https://github.com/hoppinworld/data" }
 amethyst-editor-sync = "0.2"
 serde_json = "1.0.32"
 
-#[patch.crates-io]
-#specs = { git = "https://github.com/jojolepro/specs", features = ["common"] }
+[patch.crates-io]
+amethyst = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_core = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_assets = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_renderer = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
 
-#amethyst = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_core = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_renderer = { git = "https://github.com/amethyst/amethyst" }
-
-#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-#amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-#amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-
-#amethyst = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_core = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
 #amethyst-editor-sync = { git = "https://github.com/randomPoison/amethyst-editor-sync" }
 
 
-#collision = { git = "https://github.com/rustgd/collision-rs", features = ["serde"] }
-
-#[patch.'https://github.com/amethyst/amethyst']
-#amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-#amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-#amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "invertuv" }
-
-#amethyst = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_core = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_assets = { git = "https://github.com/amethyst/amethyst" }
-#amethyst_renderer = { git = "https://github.com/amethyst/amethyst" }
+[patch.'https://github.com/amethyst/amethyst']
+amethyst = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_core = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_assets = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
+amethyst_renderer = { git = "https://github.com/karroffel/amethyst", branch = "shader-light-fixes" }
 
 #[patch.'https://github.com/rustgd/rhusics']
 #rhusics-core = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
 #rhusics-ecs = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
-
-#[replace]
-#"collision:0.18.0" = { version = "0.18", features = ["serde"] }
-#"amethyst:0.8.0" = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
-#"amethyst_core:0.3.0" = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }

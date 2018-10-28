@@ -6,6 +6,7 @@ extern crate amethyst_gltf;
 extern crate amethyst_rhusics;
 #[macro_use]
 extern crate serde;
+#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate log;
@@ -144,6 +145,7 @@ pub enum ObjectType {
     EndZone,
     KillZone,
     Player,
+    PlayerFeet,
     Dynamic,
     Ignore,
     SegmentZone(u8),
@@ -155,12 +157,42 @@ impl Default for ObjectType {
     }
 }
 
+fn contact_dual(s: &ObjectType, o: &ObjectType, w1: &ObjectType, w2: &ObjectType) -> bool {
+    // Special match to ignore the segment zone id
+    if let &ObjectType::SegmentZone(_) = s {
+        return match (w1, w2) {
+            (&ObjectType::SegmentZone(_), other) => o == other,
+            (other, &ObjectType::SegmentZone(_)) => o == other,
+            _ => false
+        };
+    }
+
+    if let &ObjectType::SegmentZone(_) = o {
+        return match (w1, w2) {
+            (&ObjectType::SegmentZone(_), other) => s == other,
+            (other, &ObjectType::SegmentZone(_)) => s == other,
+            _ => false
+        };
+    }
+
+    (s == w1 && o == w2) || (s == w2 && o == w1)
+}
+
 impl Collider for ObjectType {
     fn should_generate_contacts(&self, other: &ObjectType) -> bool {
-        *self == ObjectType::Player || *other == ObjectType::Player || *self == ObjectType::Dynamic || *other == ObjectType::Dynamic
+        contact_dual(self, other, &ObjectType::Player, &ObjectType::Scene) ||
+        contact_dual(self, other, &ObjectType::PlayerFeet, &ObjectType::Scene) ||
+        contact_dual(self, other, &ObjectType::Player, &ObjectType::KillZone) ||
+        contact_dual(self, other, &ObjectType::Player, &ObjectType::StartZone) ||
+        contact_dual(self, other, &ObjectType::Player, &ObjectType::EndZone) ||
+        contact_dual(self, other, &ObjectType::Player, &ObjectType::Dynamic) ||
+        contact_dual(self, other, &ObjectType::Player, &ObjectType::SegmentZone(69))
+        //*self == ObjectType::Player || *other == ObjectType::Player || *self == ObjectType::Dynamic || *other == ObjectType::Dynamic
     }
 }
 
+#[derive(Component)]
+pub struct PlayerFeetTag;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, new)]
@@ -519,6 +551,73 @@ impl<'a> System<'a> for ContactSystem {
     }
 }
 
+
+#[derive(Default)]
+pub struct ColliderGroundedSystem {
+    contact_reader: Option<ReaderId<ContactEvent<Entity, Point3<f32>>>>,
+}
+
+impl<'a> System<'a> for ColliderGroundedSystem {
+    type SystemData = (
+        Entities<'a>,
+        Read<'a, EventChannel<ContactEvent<Entity, Point3<f32>>>>,
+        Read<'a, Time>,
+        ReadStorage<'a, ObjectType>,
+        ReadStorage<'a, Player>,
+        WriteStorage<'a, Grounded>,
+    );
+
+    fn run(
+        &mut self,
+        (
+            entities,
+            contacts,
+            time,
+            object_types,
+            players,
+            mut groundeds,
+        ): Self::SystemData,
+    ) {
+        let mut ground = false;
+        for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
+            //info!("Collision: {:?}",contact);
+            let type1 = object_types.get(contact.bodies.0);
+            let type2 = object_types.get(contact.bodies.1);
+
+            if type1.is_none() || type2.is_none() {
+                continue;
+            }
+            let type1 = type1.unwrap();
+            let type2 = type2.unwrap();
+
+            info!("CONTACT WITH {:?} & {:?}", type1, type2);
+            if *type1 == ObjectType::PlayerFeet || *type2 == ObjectType::PlayerFeet {
+                // The player feets touched the ground.
+                // That means we are grounded.
+                ground = true;
+                info!("GROUNDED");
+            }
+        }
+
+        if let Some(ground_comp) = (&players, &mut groundeds).join().next().map(|t| t.1) {
+            if ground && !ground_comp.ground {
+                // Just grounded
+                ground_comp.since = time.absolute_time_seconds();
+            }
+            ground_comp.ground = ground;
+        }
+    }
+
+    fn setup(&mut self, res: &mut Resources) {
+        Self::SystemData::setup(res);
+        self.contact_reader = Some(
+            res.fetch_mut::<EventChannel<ContactEvent<Entity, Point3<f32>>>>()
+                .register_reader(),
+        );
+    }
+}
+
+
 #[derive(Default, Debug, Clone, Serialize, Deserialize, new)]
 pub struct RuntimeStats {
 	pub jumps: u32,
@@ -653,8 +752,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
-        //Trans::Switch(Box::new(LoginState))
-        Trans::Switch(Box::new(MainMenuState))
+        Trans::Switch(Box::new(LoginState))
+        //Trans::Switch(Box::new(MainMenuState))
     }
 }
 
@@ -811,6 +910,57 @@ pub fn do_login(future_runtime: &mut Runtime, queue: &FutureProcessor, username:
     future_runtime.spawn(future);
 
     //runtime.shutdown_on_idle().wait().unwrap();
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ScoreInsertRequest {
+    pub mapid: i32,
+    pub segment_times: Vec<f32>,
+    pub strafes: i32,
+    pub jumps: i32,
+    /// Seconds
+    pub total_time: f32,
+    pub max_speed: f32,
+    pub average_speed: f32,
+}
+
+pub fn submit_score(future_runtime: &mut Runtime, queue: &FutureProcessor, auth_token: String, score_insert_request: ScoreInsertRequest) {
+    let https = HttpsConnector::new(4).expect("TLS initialization failed");
+    let client = Client::builder().build::<_, hyper::Body>(https);
+    let request = Request::post("https://hoppinworld.net:27015/submitscore")
+        .header("Content-Type", "application/json")
+        .header("X-Authorization", format!("Bearer {}", auth_token))
+        .body(Body::from(json!(score_insert_request).to_string()))
+        .unwrap();
+
+    let queue_ref = queue.queue_ref();
+    let future = client
+        // Fetch the url...
+        .request(request)
+        // And then, if we get a response back...
+        .and_then(move |result| {
+            println!("Response: {}", result.status());
+            println!("Headers: {:#?}", result.headers());
+
+            result.into_body().for_each(move |chunk| {
+                /*match serde_json::from_slice::<Auth>(&chunk) {
+                    Ok(a) => queue_ref.lock().unwrap().push_back(Box::new(move |world| {
+                        world.add_resource(a.clone());
+                    })),
+                    Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
+                }*/
+                info!("{}", String::from_utf8(chunk.to_vec()).unwrap_or("~~Failure to convert server answer to string~~".to_string()));
+                Ok(())
+            })
+        })
+        // If all good, just tell the user...
+        .map(move |_| {
+            println!("\n\nDone submitting score.");
+        })
+        .map_err(|err| {
+            eprintln!("Error {}", err);
+        });
+    future_runtime.spawn(future);
 }
 
 #[derive(Default)]
@@ -1131,6 +1281,26 @@ pub fn verts_from_mesh_data(mesh_data: &MeshData, scale: &Vector3<f32>) -> Vec<P
 }
 
 
+struct PlayerFeetSync;
+
+impl<'a> System<'a> for PlayerFeetSync {
+    type SystemData = (
+        ReadStorage<'a, PlayerFeetTag>,
+        ReadStorage<'a, Player>,
+        WriteStorage<'a, NextFrame<BodyPose3<f32>>>,
+    );
+
+    fn run(&mut self, (player_feets, players, mut body_poses): Self::SystemData) {
+        // Player in scene
+        if let Some(player_position) = (&players, &body_poses).join().next().map(|e| e.1.value.position().clone()) {
+            info!("MOVING PLAYER FEETS TO {:?}", Point3::new(player_position.x, player_position.y - 0.4, player_position.z));
+            // TODO: Replace -0.4 by player half_height
+            (&player_feets, &mut body_poses).join().next().expect("No player feet but player is in scene.").1.value.set_position(Point3::new(player_position.x, player_position.y - 0.4, player_position.z));
+        }
+    }
+}
+
+
 #[derive(Default)]
 struct MapLoadState {
     load_progress: Option<ProgressCounter>,
@@ -1186,11 +1356,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 
         self.load_progress = Some(pg);
 
-        let scene_root = data.world.create_entity()
+        data.world.create_entity()
             .with(scene_handle.unwrap())
             .with(Removal::new(RemovalId::Scene))
             .build();
-        //add_removal_to_entity(scene_root, RemovalId::Scene, &data.world);
 
         data.world.add_resource(Gravity::new(Vector3::new(0.0, player_settings.gravity, 0.0)));
 
@@ -1242,20 +1411,19 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 
 
         // Secondary ground collider
-        /*let tr = Transform::from(Vector3::new(0.,-0.4025,0.));
-        let secondary = data
-            .world
+        data.world
             .create_entity()
-            .with(ObjectType::Player)
+            .with(ObjectType::PlayerFeet)
             .with_dynamic_physical_entity(
                 Shape::new_simple_with_type(
                     CollisionStrategy::CollisionOnly,
+                    //CollisionStrategy::FullResolution,
                     CollisionMode::Discrete,
-                    Cylinder::new(0.05, 0.15).into(),
-                    ObjectType::Player,
+                    Cylinder::new(0.005, 0.2).into(),
+                    ObjectType::PlayerFeet,
                 ),
                 BodyPose3::new(
-                    Point3::new(tr.translation.x,tr.translation.y,tr.translation.z),
+                    Point3::new(0., 0., 0.),
                     Quaternion::<f32>::one(),
                 ),
                 Velocity3::default(),
@@ -1263,11 +1431,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                 Mass3::infinite(),
                 //player_settings.mass.clone(),
             )
-            .with(tr)
-            .with(Parent {
-                entity: player_entity.clone(),
-            })
-            .build();*/
+            .with(PlayerFeetTag)
+            .with(Transform::default())
+            .build();
 
         // Assign secondary collider to player's Grounded component
         //(&mut data.world.write_storage::<Grounded>()).join().for_each(|grounded| grounded.watch_entity = Some(secondary.clone()));
@@ -1278,14 +1444,23 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         tr.translation = [0.0, 10.0, 0.0].into();
         tr.rotation = Quaternion::one();
         
+        /*data.world
+            .create_entity()
+            .with(tr)
+            .with(Light::Sun(SunLight {
+                ang_rad: 10.0,
+                color: Rgba::white(),
+                direction: [0.1, -1.0, 0.05],
+                intensity: 10.0,
+            })).with(Removal::new(RemovalId::Scene))
+            .build();*/
+
         data.world
             .create_entity()
             .with(tr)
-            .with(Light::Point(PointLight {
-                color: Rgba::white(),
-                intensity: 10.0,
-                radius: 60.0,
-                smoothness: 4.0,
+            .with(Light::Directional(DirectionalLight {
+                color: [1.0, 1.0, 1.0, 1.0].into(),
+                direction: [0.1, -1.0, 0.05],
             })).with(Removal::new(RemovalId::Scene))
             .build();
 
@@ -1414,7 +1589,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 }
 
 #[derive(Default)]
-struct ResultState;
+struct ResultState {
+    finished: bool,
+}
 
 impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
     fn on_start(&mut self, data: StateData<GameData>) {
@@ -1471,10 +1648,37 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();
         }
+
+        // Web submit score
+
+        let times = runtime_progress.segment_times.iter().map(|f| *f as f32);
+        let total_time = runtime_progress.segment_times.iter().map(|f| *f as f32).last().unwrap();
+        let auth_token = data.world.read_resource::<Auth>().token.clone();
+        let insert = ScoreInsertRequest {
+            mapid: 1,
+            segment_times: times.collect(),
+            strafes: 0,
+            jumps: 0,
+            total_time: total_time,
+            max_speed: 0.0,
+            average_speed: 0.0,
+        };
+
+        submit_score(&mut data.world.write_resource(), &data.world.read_resource(), auth_token, insert);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
+
+        if !self.finished {
+            // Set the map name
+            if let Some(map_name_entity) = UiFinder::fetch(&data.world.res).find("map_name") {
+                let map_name = data.world.read_resource::<CurrentMap>().1.name.clone();
+                data.world.write_storage::<UiText>().get_mut(map_name_entity).unwrap().text = map_name;
+                self.finished = true;
+            }
+        }
+
         Trans::None
     }
 
@@ -1712,11 +1916,6 @@ fn main() -> amethyst::Result<()> {
             "map_loader",
             &[],
         )
-        /*.with(
-            PrefabLoaderSystem::<PlayerPrefabData>::default(),
-            "player_loader",
-            &[],
-        )*/
         .with(
             GltfSceneLoaderSystem::default(),
             "gltf_loader",
@@ -1727,7 +1926,10 @@ fn main() -> amethyst::Result<()> {
             &[],
         ).with(MouseFocusUpdateSystem::new(), "mouse_focus", &[])
         .with(CursorHideSystem::new(), "cursor_hide", &[])
-        .with(GroundCheckerSystem::new(vec![ObjectType::Scene]), "ground_checker", &[])
+        .with(PlayerFeetSync, "feet_sync", &[])
+        //.with(GroundCheckerSystem::new(vec![ObjectType::Scene]), "ground_checker", &[])
+        .with(ColliderGroundedSystem::default(), "ground_checker", &["feet_sync"]) // TODO: Runs one frame late
+        // Important to have this after ground checker and before jump.
         .with(JumpSystem::default(), "jump", &["ground_checker"])
         .with(
             GroundFrictionSystem,
@@ -1743,8 +1945,8 @@ fn main() -> amethyst::Result<()> {
         )
         .with(GravitySystem, "gravity", &[])
         .with_bundle(TransformBundle::new().with_dep(&[]))?
-        .with(ContactSystem::default(), "contacts", &["bhop_movement"])
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
+        .with(ContactSystem::default(), "contacts", &["bhop_movement"])
         //.with(UiAutoTextSystem::<RelativeTimer>::default(), "timer_text_update", &[])
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,

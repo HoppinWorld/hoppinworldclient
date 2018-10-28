@@ -36,7 +36,7 @@ Container(
                 y: 75.,
                 width: 1000.,
                 height: 75.,
-                tab_order: 1,
+                tab_order: -1,
                 anchor: Middle,
             ),
             background: (
@@ -73,7 +73,7 @@ Container(
                 y: -75.,
                 width: 1000.,
                 height: 75.,
-                tab_order: 1,
+                tab_order: -1,
                 anchor: Middle,
             ),
             background: (
@@ -85,7 +85,7 @@ Container(
                         id: "password",
                         width: 1000.,
                         height: 75.,
-                        tab_order: 1,
+                        tab_order: 2,
                         anchor: Middle,
                         stretch: XY(x_margin: 0., y_margin: 0.),
                     ),
