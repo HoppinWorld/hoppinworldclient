@@ -108,7 +108,7 @@ Container(
         Button(
             transform: (
                 id: "login_button",
-                x: -192.,
+                x: -300.,
                 y: -300.,
                 width: 256.,
                 height: 128.,
@@ -129,11 +129,31 @@ Container(
             )
         ),
 
+        // Play as guest button
+        Button(
+            transform: (
+                id: "guest_button",
+                y: -300.,
+                width: 256.,
+                height: 128.,
+                tab_order: 3,
+                anchor: Middle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Guest",
+                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: (0.2, 0.2, 0.2, 1.0),
+                normal_image: Data(Rgba((0.8, 0.8, 0.8, 1.), (channel: Srgb))),
+            )
+        ),
+
         // Quit Button
         Button(
             transform: (
                 id: "quit_button",
-                x: 192.,
+                x: 300.,
                 y: -300.,
                 width: 256.,
                 height: 128.,

@@ -741,9 +741,14 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
         let hide_cursor = HideCursor { hide: false };
         data.world.add_resource(hide_cursor);
 
-        let mut world_param = WorldParameters::new(-Vector3::<f32>::unit_y());
+        let player_settings_data = std::fs::read_to_string(format!("{}/assets/base/config/player.ron",get_working_dir())).expect("Failed to read player.ron settings file.");
+        let player_settings: PlayerSettings = ron::de::from_str(&player_settings_data).expect("Failed to load player settings from file.");
+
+        let mut world_param = WorldParameters::<Vector3<f32>, f32>::default();//::new(Vector3::new(0, player_settings.gravity, 0));
         world_param = world_param.with_damping(1.0);
         data.world.add_resource(world_param);
+
+        data.world.add_resource(player_settings);
 
         //let mut runtime = Arc::new(Mutex::new(Runtime::new().expect("Failed to create tokio runtime")));
         let runtime = Runtime::new().expect("Failed to create tokio runtime");
@@ -817,6 +822,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                             do_login(&mut data.world.write_resource::<Runtime>(), &data.world.read_resource(), username, password);
                             Trans::None
                         },
+                        "guest_button" => Trans::Switch(Box::new(MapSelectState::default())),
                         "quit_button" => Trans::Quit,
                         _ => Trans::None,
                     }
@@ -1287,15 +1293,15 @@ impl<'a> System<'a> for PlayerFeetSync {
     type SystemData = (
         ReadStorage<'a, PlayerFeetTag>,
         ReadStorage<'a, Player>,
-        WriteStorage<'a, NextFrame<BodyPose3<f32>>>,
+        WriteStorage<'a, BodyPose3<f32>>,
+        ReadStorage<'a, NextFrame<BodyPose3<f32>>>,
     );
 
-    fn run(&mut self, (player_feets, players, mut body_poses): Self::SystemData) {
+    fn run(&mut self, (player_feets, players, mut body_poses, mut next_body_poses): Self::SystemData) {
         // Player in scene
-        if let Some(player_position) = (&players, &body_poses).join().next().map(|e| e.1.value.position().clone()) {
-            info!("MOVING PLAYER FEETS TO {:?}", Point3::new(player_position.x, player_position.y - 0.4, player_position.z));
+        if let Some(player_position) = (&players, &next_body_poses).join().next().map(|e| e.1.value.position().clone()) {
             // TODO: Replace -0.4 by player half_height
-            (&player_feets, &mut body_poses).join().next().expect("No player feet but player is in scene.").1.value.set_position(Point3::new(player_position.x, player_position.y - 0.4, player_position.z));
+            (&player_feets, &mut body_poses).join().next().expect("No player feet but player is in scene.").1.set_position(Point3::new(player_position.x, player_position.y - 0.4, player_position.z));
         }
     }
 }
@@ -1351,8 +1357,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             return;
         }
 
-        let player_settings_data = std::fs::read_to_string(format!("{}/assets/base/config/player.ron",get_working_dir())).expect("Failed to read player.ron settings file.");
-        let player_settings: PlayerSettings = ron::de::from_str(&player_settings_data).expect("Failed to load player settings from file.");
+        let player_settings = data.world.read_resource::<PlayerSettings>().clone();
 
         self.load_progress = Some(pg);
 
@@ -1414,25 +1419,25 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         data.world
             .create_entity()
             .with(ObjectType::PlayerFeet)
-            .with_dynamic_physical_entity(
+            .with_static_physical_entity(
                 Shape::new_simple_with_type(
                     CollisionStrategy::CollisionOnly,
                     //CollisionStrategy::FullResolution,
                     CollisionMode::Discrete,
-                    Cylinder::new(0.005, 0.2).into(),
+                    Cylinder::new(0.01, 0.155).into(),
                     ObjectType::PlayerFeet,
                 ),
                 BodyPose3::new(
                     Point3::new(0., 0., 0.),
                     Quaternion::<f32>::one(),
                 ),
-                Velocity3::default(),
                 PhysicalEntity::default(),
                 Mass3::infinite(),
                 //player_settings.mass.clone(),
             )
             .with(PlayerFeetTag)
             .with(Transform::default())
+            .with(Removal::new(RemovalId::Scene))
             .build();
 
         // Assign secondary collider to player's Grounded component
@@ -1649,22 +1654,22 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
                 .build();
         }
 
-        // Web submit score
+        // Web submit score if logged in
+        if let Some(auth_token) = data.world.res.try_fetch::<Auth>().map(|a| a.token.clone()) {
+            let times = runtime_progress.segment_times.iter().map(|f| *f as f32);
+            let total_time = runtime_progress.segment_times.iter().map(|f| *f as f32).last().unwrap();
+            let insert = ScoreInsertRequest {
+                mapid: 1,
+                segment_times: times.collect(),
+                strafes: 0,
+                jumps: 0,
+                total_time: total_time,
+                max_speed: 0.0,
+                average_speed: 0.0,
+            };
 
-        let times = runtime_progress.segment_times.iter().map(|f| *f as f32);
-        let total_time = runtime_progress.segment_times.iter().map(|f| *f as f32).last().unwrap();
-        let auth_token = data.world.read_resource::<Auth>().token.clone();
-        let insert = ScoreInsertRequest {
-            mapid: 1,
-            segment_times: times.collect(),
-            strafes: 0,
-            jumps: 0,
-            total_time: total_time,
-            max_speed: 0.0,
-            average_speed: 0.0,
-        };
-
-        submit_score(&mut data.world.write_resource(), &data.world.read_resource(), auth_token, insert);
+            submit_score(&mut data.world.write_resource(), &data.world.read_resource(), auth_token, insert);
+        }
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
