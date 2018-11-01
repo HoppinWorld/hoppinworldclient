@@ -35,11 +35,11 @@ Container(
         Button(
             transform: (
                 id: "back_button",
-                y: -92.,
+                y: 92.,
                 width: 256.,
                 height: 128.,
                 tab_order: 1,
-                anchor: Middle,
+                anchor: BottomMiddle,
                 mouse_reactive: true,
             ),
             button: (
