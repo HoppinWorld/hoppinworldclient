@@ -48,21 +48,21 @@ dependencies = [
 [[package]]
 name = "amethyst"
 version = "0.9.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_animation 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_audio 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_config 0.8.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_controls 0.3.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_derive 0.2.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_input 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_locale 0.3.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_network 0.2.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_ui 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_utils 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_animation 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_audio 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_config 0.8.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_controls 0.3.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_derive 0.2.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_input 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_locale 0.3.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_network 0.2.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_ui 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_utils 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "derivative 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fern 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -91,7 +91,7 @@ name = "amethyst-extra"
 version = "0.4.0"
 source = "git+https://github.com/jojolepro/amethyst-extra#36bffafb4c71a03f96a16b63f364baff03a02c91"
 dependencies = [
- "amethyst 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "amethyst-rhusics 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossterm 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive-new 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -112,8 +112,8 @@ name = "amethyst-rhusics"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "collision 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rhusics-core 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rhusics-ecs 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -125,8 +125,8 @@ name = "amethyst-rhusics"
 version = "0.3.1"
 source = "git+https://github.com/amethyst/amethyst-rhusics#d07af6fb64b5a25f47f3c59ac5ebd96a6cefed75"
 dependencies = [
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "collision 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rhusics-core 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rhusics-ecs 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -152,16 +152,18 @@ dependencies = [
 [[package]]
 name = "amethyst_animation"
 version = "0.4.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_derive 0.2.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
+ "derivative 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "hibitset 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "minterpolate 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "minterpolate 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -188,9 +190,9 @@ dependencies = [
 [[package]]
 name = "amethyst_assets"
 version = "0.5.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "crossbeam 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "derivative 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -222,10 +224,10 @@ dependencies = [
 [[package]]
 name = "amethyst_audio"
 version = "0.4.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "cpal 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "rodio 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -246,7 +248,7 @@ dependencies = [
 [[package]]
 name = "amethyst_config"
 version = "0.8.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -269,12 +271,12 @@ dependencies = [
 [[package]]
 name = "amethyst_controls"
 version = "0.3.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_input 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_input 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "winit 0.17.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -300,7 +302,7 @@ dependencies = [
 [[package]]
 name = "amethyst_core"
 version = "0.4.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
  "cgmath 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -318,9 +320,8 @@ dependencies = [
 [[package]]
 name = "amethyst_derive"
 version = "0.2.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
  "proc-macro2 0.4.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.14 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -329,12 +330,12 @@ dependencies = [
 [[package]]
 name = "amethyst_gltf"
 version = "0.4.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_animation 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_animation 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "base64 0.9.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.17.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -363,10 +364,10 @@ dependencies = [
 [[package]]
 name = "amethyst_input"
 version = "0.5.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_config 0.8.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_config 0.8.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "derivative 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -387,19 +388,19 @@ dependencies = [
 [[package]]
 name = "amethyst_locale"
 version = "0.3.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "fluent 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "amethyst_network"
 version = "0.2.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "bincode 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fern 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -443,10 +444,11 @@ dependencies = [
 [[package]]
 name = "amethyst_renderer"
 version = "0.9.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_derive 0.2.0 (git+https://github.com/amethyst/amethyst)",
  "derivative 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -502,13 +504,13 @@ dependencies = [
 [[package]]
 name = "amethyst_ui"
 version = "0.4.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_audio 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_input 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_audio 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_input 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "clipboard 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "derivative 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -544,12 +546,13 @@ dependencies = [
 [[package]]
 name = "amethyst_utils"
 version = "0.4.0"
-source = "git+https://github.com/karroffel/amethyst?branch=shader-light-fixes#e832e5e24dca31957c2fa9eef494eb023831b984"
+source = "git+https://github.com/amethyst/amethyst#b81c6bcf6dabe22a0954b92b6cf7357f6ba45215"
 dependencies = [
- "amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_controls 0.3.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_controls 0.3.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_derive 0.2.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "cgmath 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1873,12 +1876,12 @@ dependencies = [
 name = "hoppinworld"
 version = "0.1.0"
 dependencies = [
- "amethyst 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst 0.9.0 (git+https://github.com/amethyst/amethyst)",
  "amethyst-editor-sync 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "amethyst-extra 0.4.0 (git+https://github.com/jojolepro/amethyst-extra)",
  "amethyst-rhusics 0.3.1 (git+https://github.com/amethyst/amethyst-rhusics)",
- "amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
- "amethyst_gltf 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)",
+ "amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)",
+ "amethyst_gltf 0.4.0 (git+https://github.com/amethyst/amethyst)",
  "derive-new 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "derive_builder 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hoppinworlddata 0.1.0 (git+https://github.com/hoppinworld/data)",
@@ -2284,6 +2287,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "minterpolate"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "minterpolate"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3945,36 +3958,36 @@ dependencies = [
 "checksum aho-corasick 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)" = "68f56c7353e5a9547cbd76ed90f7bb5ffc3ba09d4ea9bd1d8c06c8b1142eeb5a"
 "checksum alsa-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b0edcbbf9ef68f15ae1b620f722180b82a98b6f0628d30baa6b8d2a5abc87d58"
 "checksum amethyst 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f92e4a150ee7d2c22d4dfc1b921b22316e2b5a2823e255ed0c573bcd0f3e5e76"
-"checksum amethyst 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst 0.9.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst-editor-sync 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "29e22c33c5612169fb257681be09d938c014ffa491e5443fdf5aeb80f7d2dc25"
 "checksum amethyst-extra 0.4.0 (git+https://github.com/jojolepro/amethyst-extra)" = "<none>"
 "checksum amethyst-rhusics 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "34e343b64c5faaca52c468c275f8be514c7ba0ed7eebc6063c533dc7dfbecf9c"
 "checksum amethyst-rhusics 0.3.1 (git+https://github.com/amethyst/amethyst-rhusics)" = "<none>"
 "checksum amethyst_animation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ce49545154648ced05ad2874c15f825007c2692e78c824019af37c968875756d"
-"checksum amethyst_animation 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_animation 0.4.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_assets 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e4a70e2aca8fb59a39f96bcdc3440e4a98cd0f284f822551add9dd8262abccb8"
-"checksum amethyst_assets 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_assets 0.5.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_audio 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a9d6e05802c691cd6948bf0d4497610d6a790492602e0fc823baa42594a80442"
-"checksum amethyst_audio 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_audio 0.4.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_config 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8ffe90ede4049b1180d364db4d93c1a590402e2c5592cd3671aa6c4e6c53acf3"
-"checksum amethyst_config 0.8.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_config 0.8.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_controls 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d474691ca6cef31f0aa538e3ebf0abf5aed61889f1804c318042782f94396cae"
-"checksum amethyst_controls 0.3.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_controls 0.3.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_core 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4b49616546d1825ebd61be8f8678a49bdc883fa5f8e57857323a489374c40e6b"
-"checksum amethyst_core 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
-"checksum amethyst_derive 0.2.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
-"checksum amethyst_gltf 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_core 0.4.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
+"checksum amethyst_derive 0.2.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
+"checksum amethyst_gltf 0.4.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_input 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "51dab65f10906bd4fb33188b1588ae78b0cde976267bf51f778b00c306fe89e6"
-"checksum amethyst_input 0.5.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_input 0.5.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_locale 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7130b8bf59c66ebadcb1417469587b575fb90deb4f4a7da8486f3291df1b3049"
-"checksum amethyst_locale 0.3.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
-"checksum amethyst_network 0.2.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_locale 0.3.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
+"checksum amethyst_network 0.2.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_renderer 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ffaa05b13d7355c7f13e14d9b7070d3e7f23bed5638481f4939d3511ae424d21"
-"checksum amethyst_renderer 0.9.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_renderer 0.9.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_ui 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0d21a384d3121fd7f632afd05cff5f1c929f2388a8a5d728cd0765a06b4845f9"
-"checksum amethyst_ui 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_ui 0.4.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum amethyst_utils 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dc8b5fa4e01a4fa7962d86f8f415b8b71956060c85391cd1ee40542d3bd81317"
-"checksum amethyst_utils 0.4.0 (git+https://github.com/karroffel/amethyst?branch=shader-light-fixes)" = "<none>"
+"checksum amethyst_utils 0.4.0 (git+https://github.com/amethyst/amethyst)" = "<none>"
 "checksum android_glue 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "000444226fcff248f2bc4c7625be32c63caccfecc2723a2b9f78a7487a49c407"
 "checksum annotate-snippets 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "455e7e547c91cdb148034484ceee42779b0453d7fe166ce3f8c84ce97130ec86"
 "checksum ansi_term 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6b3568b48b7cefa6b8ce125f9bb4989e52fbcc29ebea88df04cc7c5f12f70455"
@@ -4162,6 +4175,7 @@ dependencies = [
 "checksum miniz-sys 0.1.11 (registry+https://github.com/rust-lang/crates.io-index)" = "0300eafb20369952951699b68243ab4334f4b10a88f411c221d444b36c40e649"
 "checksum mint 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c9e6c29b4bb0155117ea1a61520406c975673ee71b0287323f06d1a8d69c4a7c"
 "checksum minterpolate 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4145b04ce678850f3470934511e68c0a8f81c06d7db83a710a08ae41c8b4a85e"
+"checksum minterpolate 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9d51167254a2f9cbf683aa415fe275ab4e11350c58b7f0a2d7f6e0f10b3594ee"
 "checksum mio 0.6.16 (registry+https://github.com/rust-lang/crates.io-index)" = "71646331f2619b1026cc302f87a2b8b648d5c6dd6937846a16cc8ce0f347f432"
 "checksum mio-uds 0.6.7 (registry+https://github.com/rust-lang/crates.io-index)" = "966257a94e196b11bb43aca423754d87429960a768de9414f3691d6957abf125"
 "checksum miow 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "8c1f2f3b1cf331de6896aabf6e9d55dca90356cc9960cca7eaaf408a355ae919"
