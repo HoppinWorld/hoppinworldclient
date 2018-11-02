@@ -1329,7 +1329,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 
         let scene_handle = data.world.read_resource::<AssetLoader>()
             .load(
-                &format!("../../{}",gltf_path_from_map(&get_working_dir(), &name)),
+                //&format!("../../{}",gltf_path_from_map(&get_working_dir(), &name)),
+                &gltf_path_from_map("../..", &name),
                 GltfSceneFormat,
                 GltfSceneOptions{
                     flip_v_coord: true,
