@@ -4,7 +4,7 @@
     "right": Emulated(pos: Key(D), neg: Key(A)),
   }, 
   actions: { 
-    "jump": [Key(Space)],
-    "pause": [Key(Escape)],
+    "jump": [[Key(Space)]],
+    "pause": [[Key(Escape)]],
   },
 )
