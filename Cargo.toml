@@ -23,7 +23,7 @@ log = "0.4"
 winit = "0.17.0"
 partial_function = "0.4.0"
 derive-new = "0.5"
-derive_builder = "0.6"
+#derive_builder = "0.6"
 specs-derive = { git = "https://github.com/slide-rs/specs" }
 uuid = { version = "0.7.1", features = ["v4", "serde"] }
 ron = "0.4"
