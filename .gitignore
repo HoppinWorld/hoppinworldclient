@@ -2,3 +2,4 @@
 **/*.rs.bk
 /hoppinworld-export-*
 /hoppinworld-*.zip
+thread_profile.json

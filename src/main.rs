@@ -1749,8 +1749,15 @@ fn main() -> amethyst::Result<()> {
 
 
     */
+	
+	amethyst::start_logger(Default::default());
 
-    amethyst::start_logger(Default::default());
+    /*amethyst::start_logger(amethyst::LoggerConfig {
+		stdout: amethyst::StdoutLog::Colored,
+		level_filter: amethyst::LogLevelFilter::Error,
+		log_file: None,
+		allow_env_override: false,
+	});*/
 
     let resources_directory = get_working_dir();
 
