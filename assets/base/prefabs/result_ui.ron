@@ -8,7 +8,7 @@ Container(
         height: 20.,
     ),
     background: (
-        image: Data(Rgba((1.,1.,1., 1.0), (channel: Srgb))),
+        image: Data(Rgba((0.988, 0.969, 1.0, 1.0), (channel: Srgb))),
     ),
     children: [
         // Title
@@ -25,7 +25,7 @@ Container(
                 text: "Result",
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 80.,
-                color: (0.2, 0.2, 0.2, 1.0),
+                color: (0.149, 0.376, 0.643, 1.0),
             )
         ),
 
@@ -43,7 +43,7 @@ Container(
                 text: "Map Name",
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 40.,
-                color: (0.2, 0.2, 0.2, 1.0),
+                color: (0.988, 0.537, 0.255, 1.0),
             )
         ),
 
@@ -61,7 +61,7 @@ Container(
                 text: "Time",
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 50.,
-                color: (0.2, 0.2, 0.2, 1.0),
+                color: (0.988, 0.537, 0.255, 1.0),
             )
         ),
 
@@ -81,8 +81,10 @@ Container(
                 text: "Back",
                 font: File("assets/base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
-                normal_text_color: (0.2, 0.2, 0.2, 1.0),
-                normal_image: Data(Rgba((1., 1., 1., 1.), (channel: Srgb))),
+                normal_text_color: (0.251, 0.247, 0.298, 1.0),
+                normal_image: Data(Rgba((0.914, 0.843, 0.345, 1.0), (channel: Srgb))),
+                hover_image: Data(Rgba((0.795, 0.734, 0.304, 1.0), (channel: Srgb))),
+                press_image: Data(Rgba((0.710, 0.646, 0.191, 1.0), (channel: Srgb))),
             )
         ),
     ]

@@ -822,7 +822,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                             do_login(&mut data.world.write_resource::<Runtime>(), &data.world.read_resource(), username, password);
                             Trans::None
                         },
-                        "guest_button" => Trans::Switch(Box::new(MapSelectState::default())),
+                        "guest_button" => Trans::Switch(Box::new(MainMenuState::default())),
                         "quit_button" => Trans::Quit,
                         _ => Trans::None,
                     }
