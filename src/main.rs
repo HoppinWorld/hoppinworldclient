@@ -590,12 +590,12 @@ impl<'a> System<'a> for ColliderGroundedSystem {
             let type1 = type1.unwrap();
             let type2 = type2.unwrap();
 
-            info!("CONTACT WITH {:?} & {:?}", type1, type2);
+            //info!("CONTACT WITH {:?} & {:?}", type1, type2);
             if *type1 == ObjectType::PlayerFeet || *type2 == ObjectType::PlayerFeet {
                 // The player feets touched the ground.
                 // That means we are grounded.
                 ground = true;
-                info!("GROUNDED");
+                //info!("GROUNDED");
             }
         }
 
@@ -918,6 +918,7 @@ pub fn do_login(future_runtime: &mut Runtime, queue: &FutureProcessor, username:
     //runtime.shutdown_on_idle().wait().unwrap();
 }
 
+// TODO remove dup from backend
 #[derive(Serialize, Deserialize)]
 pub struct ScoreInsertRequest {
     pub mapid: i32,
@@ -1132,11 +1133,11 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for GameplayState {
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
-        info!("FPS: {}", data.world.read_resource::<FPSCounter>().sampled_fps());
-        info!("Delta: {}", data.world.read_resource::<Time>().delta_seconds());
+        //info!("FPS: {}", data.world.read_resource::<FPSCounter>().sampled_fps());
+        //info!("Delta: {}", data.world.read_resource::<Time>().delta_seconds());
+        //(&data.world.read_storage::<Transform>(), &data.world.read_storage::<ObjectType>()).join().filter(|t| *t.1 == ObjectType::Player).for_each(|t| info!("{:?}", t));
 
         time_sync(&data.world);
-        (&data.world.read_storage::<Transform>(), &data.world.read_storage::<ObjectType>()).join().filter(|t| *t.1 == ObjectType::Player).for_each(|t| info!("{:?}", t));
         data.data.update(&data.world);
         Trans::None
     }
@@ -1369,6 +1370,18 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 
         data.world.add_resource(Gravity::new(Vector3::new(0.0, player_settings.gravity, 0.0)));
 
+        let mut jump = Jump::new(true, true, player_settings.jump_velocity, true);
+        jump.jump_timing_boost = Some(
+            PartialFunctionBuilder::new().with(-0.20, 0.20, |t| {
+                let max = 0.25;
+                if t == 0.0 {
+                    1.0 + max as f32
+                } else {
+                    1.0 + (0.005_f64/t).abs().max(max) as f32
+                }
+            }).build()
+        );
+
         let player_entity = data
             .world
             .create_entity()
@@ -1377,7 +1390,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .with(player_settings.ground_friction)
             .with(FlyControlTag)
             .with(ObjectType::Player)
-            .with(Jump::new(true, true, player_settings.jump_velocity, true))
+            .with(jump)
             .with(Player)
             .with_dynamic_physical_entity(
                 Shape::new_simple_with_type(

@@ -6,10 +6,9 @@ MapInfo(
     	Downhill,
     	Speed,
     ],
-    difficulty: Easy,
+    difficulty: Normal,
     tags: [
-        "test",
-        "first",
+        "First Map",
     ],
     segment_count: 1,
 )
