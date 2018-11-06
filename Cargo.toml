@@ -6,9 +6,9 @@ authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 [dependencies]
 
 
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
 
 
 hyper = "0.12.11"
@@ -31,25 +31,26 @@ uuid = { version = "0.7.1", features = ["v4", "serde"] }
 ron = "0.4"
 
 hoppinworlddata = { git = "https://github.com/hoppinworld/data" }
+hoppinworldruntime = { git = "https://github.com/hoppinworld/runtime" }
 
 amethyst-editor-sync = "0.2"
 serde_json = "1.0.32"
 
 [patch.crates-io]
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_renderer = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_renderer = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
 
 
 #amethyst-editor-sync = { git = "https://github.com/randomPoison/amethyst-editor-sync" }
 
 
 [patch.'https://github.com/amethyst/amethyst']
-amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
-amethyst_renderer = { git = "https://github.com/jojolepro/amethyst", branch = "renderprofile" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_assets = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
+amethyst_renderer = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
 
 #[patch.'https://github.com/rustgd/rhusics']
 #rhusics-core = { git = "https://github.com/jojolepro/rhusics", branch = "defaults", features = ["serde"] }
