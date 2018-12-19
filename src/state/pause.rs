@@ -15,7 +15,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for PauseMenuState {
     fn on_start(&mut self, data: StateData<GameData>) {
         let ui_root = data
             .world
-            .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/pause_ui.ron", ()));
+            .exec(|mut creator: UiCreator| creator.create("base/prefabs/pause_ui.ron", ()));
         add_removal_to_entity(ui_root, RemovalId::PauseUi, &data.world);
     }
 

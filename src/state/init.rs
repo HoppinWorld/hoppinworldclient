@@ -22,8 +22,11 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
         let hide_cursor = HideCursor { hide: false };
         data.world.add_resource(hide_cursor);
 
-        let player_settings_data = std::fs::read_to_string(format!("{}/assets/base/config/player.ron",application_root_dir().unwrap().to_str().unwrap())).expect("Failed to read player.ron settings file.");
-        let player_settings: PlayerSettings = ron::de::from_str(&player_settings_data).expect("Failed to load player settings from file.");
+        let mut player_settings_path = application_root_dir().unwrap();
+        player_settings_path.push("assets/base/config/player.ron");
+        let player_settings_path = player_settings_path.to_str().unwrap();
+        let player_settings_data = std::fs::read_to_string(player_settings_path).expect(&format!("Failed to load player settings from file at {}",player_settings_path));
+        let player_settings: PlayerSettings = ron::de::from_str(&player_settings_data).expect(&format!("Failed to load player settings from file at {}",player_settings_path));
 
         data.world.add_resource(player_settings);
 

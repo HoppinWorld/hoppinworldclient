@@ -268,13 +268,18 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                         object_types
                             .insert(entity, obj_type)
                             .expect("Failed to add ObjectType to map mesh");
-                        colliders.insert(entity,
-                            ColliderBuilder::from(ShapeHandle::new(ConvexHull::try_from_points(&mesh).expect("Non convex mesh in scene!")))
-                            .collision_group(obj_type.into()) // Scene
-                            .physics_material(Material::new(0.0, 0.0))
-                            .build()
-                            .unwrap()
-                        ).expect("Failed to add Collider to map mesh");
+                        match ConvexHull::try_from_points(&mesh) {
+                            Some(handle) => {
+                                colliders.insert(entity,
+                                    ColliderBuilder::from(ShapeHandle::new(handle))
+                                    .collision_group(obj_type.into()) // Scene
+                                    .physics_material(Material::new(0.0, 0.0))
+                                    .build()
+                                    .unwrap()
+                                ).expect("Failed to add Collider to map mesh");
+                            },
+                            None => error!("Non-Convex mesh in scene! Mesh: {:?}", mesh),
+                        }
                         removals.insert(entity, Removal::new(RemovalId::Scene)).unwrap();
                     }
 

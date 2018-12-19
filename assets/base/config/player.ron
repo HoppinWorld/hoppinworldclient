@@ -27,11 +27,49 @@ PlayerSettings(
         restitution: 0.00,
         friction: 0.00,
     ),
-    physical_entity: DynamicBody::RigidBody(
-        mass: 2.0,
-        angular_mass: Matrix3((0,0,0), (0,0,0), (0,0,0)),
-        center_of_mass: Point3{x: 0.0, y: 0.0, z: 0.0},
-    ),
+    physical_entity: RigidBody((
+        velocity: (
+            linear: [
+                0,
+                0,
+                0,
+            ],
+            angular: [
+                0,
+                0,
+                0,
+            ],
+        ),
+        mass: 0,
+        angular_mass: [
+            1,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            1,
+        ],
+        center_of_mass: [
+            0,
+            0,
+            0,
+        ],
+        external_forces: (
+            linear: [
+                0,
+                0,
+                0,
+            ],
+            angular: [
+                0,
+                0,
+                0,
+            ],
+        ),
+    )),
     mass: 2.0,
     gravity: -2.8,
     jump_velocity: 1.1,

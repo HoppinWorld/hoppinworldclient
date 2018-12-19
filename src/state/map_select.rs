@@ -16,7 +16,7 @@ pub struct MapSelectState;
 impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
         let ui_root = data.world.exec(|mut creator: UiCreator| {
-            creator.create("assets/base/prefabs/map_select_ui.ron", ())
+            creator.create("base/prefabs/map_select_ui.ron", ())
         });
         add_removal_to_entity(ui_root, RemovalId::MapSelectUi, &data.world);
 

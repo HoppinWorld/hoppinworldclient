@@ -14,7 +14,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MainMenuState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
         let ui_root = data
             .world
-            .exec(|mut creator: UiCreator| creator.create("assets/base/prefabs/menu_ui.ron", ()));
+            .exec(|mut creator: UiCreator| creator.create("base/prefabs/menu_ui.ron", ()));
         add_removal_to_entity(ui_root, RemovalId::MenuUi, &data.world);
 
         set_discord_state(String::from("Main Menu"), &mut data.world);

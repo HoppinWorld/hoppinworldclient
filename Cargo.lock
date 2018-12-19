@@ -2608,7 +2608,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "nphysics-ecs-dumb"
 version = "0.1.0"
-source = "git+https://github.com/jojolepro/nphysics-ecs-dumb?branch=changes#df065335c2f91999c2340e59020379f7b75fe7aa"
+source = "git+https://github.com/jojolepro/nphysics-ecs-dumb?branch=changes#42c83398ad7b2ad91afc31025236efbb1c2e298e"
 dependencies = [
  "amethyst 0.10.0 (git+https://github.com/jojolepro/amethyst?branch=hoppinworld)",
  "derive-new 0.5.6 (registry+https://github.com/rust-lang/crates.io-index)",

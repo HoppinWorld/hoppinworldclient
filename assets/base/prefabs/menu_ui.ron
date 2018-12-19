@@ -24,7 +24,7 @@ Container(
             ),
             text: (
                 text: "Hoppin",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 100.,
                 color: (0.149, 0.376, 0.643, 1.0),
                 align: MiddleRight,
@@ -44,7 +44,7 @@ Container(
             ),
             text: (
                 text: "World",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 100.,
                 color: (0.988, 0.537, 0.255, 1.0),
                 align: MiddleLeft,
@@ -64,7 +64,7 @@ Container(
             ),
             button: (
                 text: "Play!",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
                 normal_text_color: (0.251, 0.247, 0.298, 1.0),
                 normal_image: Data(Rgba((0.988, 0.537, 0.255, 1.0), (channel: Srgb))),
@@ -88,7 +88,7 @@ Container(
             ),
             button: (
                 text: "Quit",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
                 normal_text_color: (0.251, 0.247, 0.298, 1.0),
                 normal_image: Data(Rgba((0.914, 0.843, 0.345, 1.0), (channel: Srgb))),

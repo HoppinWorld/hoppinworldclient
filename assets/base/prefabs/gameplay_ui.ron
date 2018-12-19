@@ -46,7 +46,7 @@ Container(
             ),
             text: (
                 text: "Time",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 50.,
                 color: (0.988, 0.969, 1.0, 1.0),
             )
@@ -65,7 +65,7 @@ Container(
             ),
             text: (
                 text: "PB",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 50.,
                 color: (0.988, 0.969, 1.0, 1.0),
             )
@@ -84,7 +84,7 @@ Container(
             ),
             text: (
                 text: "WR",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 50.,
                 color: (0.988, 0.969, 1.0, 1.0),
             )
@@ -103,7 +103,7 @@ Container(
             ),
             text: (
                 text: "1",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 75.,
                 color: (0.988, 0.969, 1.0, 1.0),
             )
@@ -122,7 +122,7 @@ Container(
             ),
             text: (
                 text: "222",
-                font: File("assets/base/font/arial.ttf", Ttf, ()),
+                font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 75.,
                 color: (0.988, 0.969, 1.0, 1.0),
             )
