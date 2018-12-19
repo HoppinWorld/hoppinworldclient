@@ -23,15 +23,14 @@ PlayerSettings(
         half_height: 0.4,
         radius: 0.2,
     )),
-    physical_entity: PhysicalEntity(
-        material: Material(
-            density: 1.0,
-            //restitution: 0.05,
-            restitution: 0.00,
-        ),
-        gravity_scale: 1.0,
-        damping: Some(1.0),
-        active: true,
+    material: Material(
+        restitution: 0.00,
+        friction: 0.00,
+    ),
+    physical_entity: DynamicBody::RigidBody(
+        mass: 2.0,
+        angular_mass: Matrix3((0,0,0), (0,0,0), (0,0,0)),
+        center_of_mass: Point3{x: 0.0, y: 0.0, z: 0.0},
     ),
     mass: 2.0,
     gravity: -2.8,

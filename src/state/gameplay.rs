@@ -1,7 +1,6 @@
 
 use amethyst::controls::HideCursor;
 use amethyst::core::Time;
-use amethyst_rhusics::time_sync;
 use amethyst::prelude::*;
 use amethyst::utils::removal::*;
 use amethyst::input::*;
@@ -22,8 +21,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for GameplayState {
         //info!("FPS: {}", data.world.read_resource::<FPSCounter>().sampled_fps());
         //info!("Delta: {}", data.world.read_resource::<Time>().delta_seconds());
         //(&data.world.read_storage::<Transform>(), &data.world.read_storage::<ObjectType>()).join().filter(|t| *t.1 == ObjectType::Player).for_each(|t| info!("{:?}", t));
-
-        time_sync(&data.world);
+        
         data.data.update(&data.world);
         Trans::None
     }

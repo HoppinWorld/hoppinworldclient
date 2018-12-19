@@ -49,7 +49,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
             // Accum
             data.world.create_entity()
                 .with(UiTransform::new(String::from(""), Anchor::TopMiddle, -200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
-                .with(UiText::new(font.clone(), sec_to_display(*time), [0.1,0.1,0.1,1.0], 35.0))
+                .with(UiText::new(font.clone(), sec_to_display(*time, 3), [0.1,0.1,0.1,1.0], 35.0))
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();
 
@@ -66,7 +66,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
             // Segment
             data.world.create_entity()
                 .with(UiTransform::new(String::from(""), Anchor::TopMiddle, 200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
-                .with(UiText::new(font.clone(), sec_to_display(diff), [0.1,0.1,0.1,1.0], 35.0))
+                .with(UiText::new(font.clone(), sec_to_display(diff, 3), [0.1,0.1,0.1,1.0], 35.0))
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();
         }
@@ -85,7 +85,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
                 average_speed: 0.0,
             };
 
-            submit_score(&mut data.world.write_resource(), &data.world.read_resource(), auth_token, insert);
+            submit_score(&mut data.world.write_resource(), auth_token, insert);
         }
     }
 

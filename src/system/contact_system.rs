@@ -1,35 +1,31 @@
 
-
-use amethyst_rhusics::rhusics_core::physics3d::Velocity3;
+use amethyst_extra::nphysics_ecs::*;
 use RelativeTimer;
 use amethyst::core::{Transform, Time};
 use hoppinworldruntime::{ObjectType, RuntimeProgress, CustomStateEvent, PlayerTag};
 use amethyst_extra::BhopMovement3D;
-use amethyst_rhusics::rhusics_core::{NextFrame, ContactEvent, Pose};
-use amethyst_rhusics::rhusics_core::collide3d::BodyPose3;
 use amethyst::shrev::{ReaderId, EventChannel};
 use amethyst::ecs::{Resources, Entity, System, Entities, ReadStorage, WriteStorage, Read, Write, Join, SystemData};
-use amethyst::core::cgmath::{Point3, Vector2, Vector3, InnerSpace};
+use amethyst::core::nalgebra::{Point3, Vector2, Vector3};
 
 /// Very game dependent.
 /// Don't try to make that generic.
 #[derive(Default)]
 pub struct ContactSystem {
-    contact_reader: Option<ReaderId<ContactEvent<Entity, Point3<f32>>>>,
+    contact_reader: Option<ReaderId<EntityProximityEvent>>,
 }
 
 impl<'a> System<'a> for ContactSystem {
     type SystemData = (
         Entities<'a>,
-        ReadStorage<'a, Transform>,
-        Read<'a, EventChannel<ContactEvent<Entity, Point3<f32>>>>,
+        WriteStorage<'a, Transform>,
+        Read<'a, EventChannel<EntityProximityEvent>>,
         Write<'a, RelativeTimer>,
         Read<'a, Time>,
         ReadStorage<'a, ObjectType>,
         ReadStorage<'a, PlayerTag>,
         ReadStorage<'a, BhopMovement3D>,
-        WriteStorage<'a, NextFrame<Velocity3<f32>>>,
-        WriteStorage<'a, NextFrame<BodyPose3<f32>>>,
+        WriteStorage<'a, DynamicBody>,
         Write<'a, EventChannel<CustomStateEvent>>,
         Write<'a, RuntimeProgress>,
     );
@@ -38,23 +34,22 @@ impl<'a> System<'a> for ContactSystem {
         &mut self,
         (
             entities,
-            transforms,
+            mut transforms,
             contacts,
             mut timer,
             time,
             object_types,
             players,
             bhop_movements,
-            mut velocities,
-            mut body_poses,
+            mut rigid_bodies,
             mut state_eventchannel,
             mut runtime_progress,
         ): Self::SystemData,
     ) {
         for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
             //info!("Collision: {:?}",contact);
-            let type1 = object_types.get(contact.bodies.0);
-            let type2 = object_types.get(contact.bodies.1);
+            let type1 = object_types.get(contact.0);
+            let type2 = object_types.get(contact.1);
 
             if type1.is_none() || type2.is_none() {
                 continue;
@@ -64,10 +59,10 @@ impl<'a> System<'a> for ContactSystem {
 
             let (_player, other, player_entity) = if *type1 == ObjectType::Player {
                 //(contact.bodies.0,contact.bodies.1)
-                (type1, type2, contact.bodies.0)
+                (type1, type2, contact.0)
             } else if *type2 == ObjectType::Player {
                 //(contact.bodies.1,contact.bodies.0)
-                (type2, type1, contact.bodies.1)
+                (type2, type1, contact.1)
             } else {
                 continue;
             };
@@ -79,21 +74,23 @@ impl<'a> System<'a> for ContactSystem {
                     }
                     // Also limit player velocity while touching the StartZone to prevent any early starts.
                     // Not sure if this should go into state or not. Since it is heavily related to gameplay I'll put it here.
-                    for (entity, _, movement, mut velocity) in
-                        (&*entities, &players, &bhop_movements, &mut velocities).join()
+                    for (entity, _, movement, mut rb) in
+                        (&*entities, &players, &bhop_movements, &mut rigid_bodies).join()
                     {
                         if entity == player_entity {
-                            let max_vel = movement.max_velocity_ground;
-                            let cur_vel3 = *velocity.value.linear();
-                            let mut cur_vel_flat = Vector2::new(cur_vel3.x, cur_vel3.z);
-                            let cur_vel_flat_mag = cur_vel_flat.magnitude();
-                            if cur_vel_flat_mag >= max_vel {
-                                cur_vel_flat = cur_vel_flat.normalize() * max_vel;
-                                velocity.value.set_linear(Vector3::new(
-                                    cur_vel_flat.x,
-                                    cur_vel3.y,
-                                    cur_vel_flat.y,
-                                ))
+                            if let DynamicBody::RigidBody(ref mut rb) = &mut rb {
+                                let max_vel = movement.max_velocity_ground;
+                                let cur_vel3 = rb.velocity.linear;
+                                let mut cur_vel_flat = Vector2::new(cur_vel3.x, cur_vel3.z);
+                                let cur_vel_flat_mag = cur_vel_flat.magnitude();
+                                if cur_vel_flat_mag >= max_vel {
+                                    cur_vel_flat = cur_vel_flat.normalize() * max_vel;
+                                    rb.velocity.linear = Vector3::new(
+                                        cur_vel_flat.x,
+                                        cur_vel3.y,
+                                        cur_vel_flat.y,
+                                    );
+                                }
                             }
                         }
                     }
@@ -112,7 +109,7 @@ impl<'a> System<'a> for ContactSystem {
                     let seg = runtime_progress.current_segment;
                     let pos = if seg == 1 {
                         // To start zone
-                        (&transforms, &object_types).join().filter(|(_,obj)| **obj == ObjectType::StartZone).map(|(tr,_)| tr.translation).next().unwrap()
+                        (&transforms, &object_types).join().filter(|(_,obj)| **obj == ObjectType::StartZone).map(|(tr,_)| tr.translation()).next().unwrap().clone()
                     } else {
                         // To last checkpoint
 
@@ -123,13 +120,11 @@ impl<'a> System<'a> for ContactSystem {
                         	} else {
                         		false
                         	}
-                        }).map(|(tr,_)| tr.translation).next().unwrap()
+                        }).map(|(tr,_)| tr.translation()).next().unwrap().clone()
                     };
 
                     // Move the player
-                    let mut body_pose = (&players, &mut body_poses).join().map(|t| t.1).next().unwrap();
-                    let pos = Point3::new(pos.x, pos.y, pos.z);
-                    body_pose.value.set_position(pos);
+                    (&players, &mut transforms).join().for_each(|(_, tr)| *tr.translation_mut() = pos);
                 }
                 ObjectType::SegmentZone(id) => {
                     if *id >= runtime_progress.current_segment {
@@ -146,7 +141,7 @@ impl<'a> System<'a> for ContactSystem {
     fn setup(&mut self, res: &mut Resources) {
         Self::SystemData::setup(res);
         self.contact_reader = Some(
-            res.fetch_mut::<EventChannel<ContactEvent<Entity, Point3<f32>>>>()
+            res.fetch_mut::<EventChannel<EntityProximityEvent>>()
                 .register_reader(),
         );
     }

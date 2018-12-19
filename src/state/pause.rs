@@ -1,5 +1,4 @@
 
-use amethyst_rhusics::time_sync;
 use add_removal_to_entity;
 use amethyst::prelude::*;
 use amethyst::utils::removal::*;
@@ -21,8 +20,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for PauseMenuState {
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
-        // Necessary otherwise rhusics will keep the same DeltaTime and will not be paused.
-        time_sync(&data.world);
         data.data.update(&data.world);
         Trans::None
     }

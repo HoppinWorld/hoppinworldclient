@@ -3,7 +3,6 @@ extern crate amethyst;
 //extern crate amethyst_core;
 extern crate amethyst_extra;
 extern crate amethyst_gltf;
-extern crate amethyst_rhusics;
 #[macro_use]
 extern crate serde;
 #[macro_use]
@@ -25,11 +24,17 @@ extern crate hyper;
 extern crate hyper_tls;
 extern crate tokio;
 extern crate tokio_executor;
+extern crate crossbeam_channel;
 
 
 /*#[macro_use]
 extern crate derive_builder;*/
 
+use amethyst::core::nalgebra::Point3;
+use crossbeam_channel::Sender;
+use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
+use amethyst_extra::nphysics_ecs::*;
+use amethyst::utils::application_root_dir;
 use hoppinworldruntime::*;
 use std::sync::{Arc, Mutex};
 //use amethyst_editor_sync::*;
@@ -58,15 +63,10 @@ use amethyst_gltf::*;
 
 
 use amethyst::utils::fps_counter::FPSCounterBundle;
-use amethyst::core::cgmath::{
-    Point3, Vector3,
+use amethyst::core::nalgebra::{
+    Vector3,
 };
 use amethyst_extra::*;
-use amethyst_rhusics::rhusics_core::physics3d::Velocity3;
-use amethyst_rhusics::rhusics_core::{
-    ContactEvent, NextFrame
-};
-use amethyst_rhusics::DefaultPhysicsBundle3;
 use hyper::{Body, Client, Request};
 use hyper_tls::HttpsConnector;
 use tokio::prelude::{Future, Stream};
@@ -87,7 +87,7 @@ use self::util::*;
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, new)]
-struct Gravity {
+pub struct Gravity {
     pub acceleration: Vector3<f32>,
 }
 
@@ -99,86 +99,34 @@ impl Default for Gravity {
     }
 }
 
-struct GravitySystem;
+/*pub struct GravitySystem;
 
 impl<'a> System<'a> for GravitySystem {
     type SystemData = (
         Read<'a, Time>,
         Read<'a, Gravity>,
-        WriteStorage<'a, NextFrame<Velocity3<f32>>>,
+        WriteStorage<'a, DynamicBody>,
     );
-    fn run(&mut self, (time, gravity, mut velocities): Self::SystemData) {
-        for (mut velocity,) in (&mut velocities,).join() {
+    fn run(&mut self, (time, gravity, mut rigid_bodies): Self::SystemData) {
+        for (mut rb,) in (&mut rigid_bodies,).join() {
             // Add the acceleration to the velocity.
-            let new_vel = velocity.value.linear() + gravity.acceleration * time.delta_seconds();
-            velocity.value.set_linear(new_vel);
+            if let DynamicBody::RigidBody(ref mut rb) = &mut rb {
+                let new_vel = rb.velocity.linear + gravity.acceleration * time.delta_seconds();
+                rb.velocity.linear = new_vel;
+            }
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Auth {
-    token: String,
-}
-
-/// Calculates in relative time using the internal engine clock.
-#[derive(Default, Serialize)]
-pub struct RelativeTimer {
-    pub start: f64,
-    pub current: f64,
-    pub running: bool,
-}
-
-impl RelativeTimer {
-    pub fn get_text(&self) -> String {
-        sec_to_display(self.duration())
-    }
-    pub fn duration(&self) -> f64 {
-        self.current - self.start
-    }
-    pub fn start(&mut self, cur_time: f64) {
-        self.start = cur_time;
-        self.current = cur_time;
-        self.running = true;
-    }
-    pub fn update(&mut self, cur_time: f64) {
-        if self.running {
-            self.current = cur_time;
-        }
-    }
-    pub fn stop(&mut self) {
-        self.running = false;
-    }
-}
-
-
-pub fn sec_to_display(secs: f64) -> String {
-    if secs > -0.00001 && secs < 0.00001 {
-        String::from("-")
-    } else {
-        ((secs * 1000.0).ceil() / 1000.0).to_string()
-    }
-}
-
-pub struct RelativeTimerSystem;
-
-impl<'a> System<'a> for RelativeTimerSystem {
-    type SystemData = (Write<'a, RelativeTimer>, Read<'a, Time>);
-    fn run(&mut self, (mut timer, time): Self::SystemData) {
-        timer.update(time.absolute_time_seconds());
-    }
-}
-
+}*/
 
 #[derive(Default)]
 pub struct ColliderGroundedSystem {
-    contact_reader: Option<ReaderId<ContactEvent<Entity, Point3<f32>>>>,
+    contact_reader: Option<ReaderId<EntityProximityEvent>>,
 }
 
 impl<'a> System<'a> for ColliderGroundedSystem {
     type SystemData = (
         Entities<'a>,
-        Read<'a, EventChannel<ContactEvent<Entity, Point3<f32>>>>,
+        Read<'a, EventChannel<EntityProximityEvent>>,
         Read<'a, Time>,
         ReadStorage<'a, ObjectType>,
         ReadStorage<'a, PlayerTag>,
@@ -199,8 +147,8 @@ impl<'a> System<'a> for ColliderGroundedSystem {
         let mut ground = false;
         for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
             //info!("Collision: {:?}",contact);
-            let type1 = object_types.get(contact.bodies.0);
-            let type2 = object_types.get(contact.bodies.1);
+            let type1 = object_types.get(contact.0);
+            let type2 = object_types.get(contact.1);
 
             if type1.is_none() || type2.is_none() {
                 continue;
@@ -229,7 +177,7 @@ impl<'a> System<'a> for ColliderGroundedSystem {
     fn setup(&mut self, res: &mut Resources) {
         Self::SystemData::setup(res);
         self.contact_reader = Some(
-            res.fetch_mut::<EventChannel<ContactEvent<Entity, Point3<f32>>>>()
+            res.fetch_mut::<EventChannel<EntityProximityEvent>>()
                 .register_reader(),
         );
     }
@@ -247,36 +195,14 @@ pub fn add_removal_to_entity(entity: Entity, id: RemovalId, world: &World) {
         .expect(&format!("Failed to insert removalid to entity {:?}.", entity));
 }
 
-/*pub struct FutureProcessor<'a, F> where F: SystemData<'a> {
-    pub queue: Arc<Mutex<VecDeque<Box<Fn(F)>>>>,
-    pub phantom: &'a PhantomData<()>,
-}*/
-
-type FutureQueue = Arc<Mutex<VecDeque<Box<Fn(&mut World) + Send>>>>;
-
-/// Resource holding the queue of results functions.
-/// Filled when a Future finishes its work (or fails).
-/// Emptied by the amethyst main loop.
-#[derive(Default)]
-pub struct FutureProcessor {
-    pub queue: FutureQueue,
-}
-
-impl FutureProcessor {
-    pub fn queue_ref(&self) -> FutureQueue {
-        self.queue.clone()
-    }
-}
-
-pub fn do_login(future_runtime: &mut Runtime, queue: &FutureProcessor, username: String, password: String) {
-    let https = HttpsConnector::new(4).expect("TLS initialization failed");
+pub fn do_login(future_runtime: &mut Runtime, queue: Sender<Callback>, username: String, password: String) {
+    let https = HttpsConnector::new(2).expect("TLS initialization failed");
     let client = Client::builder().build::<_, hyper::Body>(https);
     let request = Request::post("https://hoppinworld.net:27015/login")
         .header("Content-Type", "application/json")
         .body(Body::from(format!("{{\"email\":\"{}\", \"password\":\"{}\"}}", username, password)))
         .unwrap();
 
-    let queue_ref = queue.queue_ref();
     let future = client
         // Fetch the url...
         .request(request)
@@ -292,9 +218,9 @@ pub fn do_login(future_runtime: &mut Runtime, queue: &FutureProcessor, username:
                 /*io::stdout().write_all(&chunk)
                     .map_err(|e| panic!("example expects stdout is open, error={}", e))*/
                 match serde_json::from_slice::<Auth>(&chunk) {
-                    Ok(a) => queue_ref.lock().unwrap().push_back(Box::new(move |world| {
+                    Ok(a) => queue.send(Box::new(move |world| {
                         world.add_resource(a.clone());
-                    })),
+                    })).expect("Failed to push auth callback to future queue"),
                     Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
                 }
                 Ok(())
@@ -335,7 +261,7 @@ pub struct ScoreInsertRequest {
     pub average_speed: f32,
 }
 
-pub fn submit_score(future_runtime: &mut Runtime, queue: &FutureProcessor, auth_token: String, score_insert_request: ScoreInsertRequest) {
+pub fn submit_score(future_runtime: &mut Runtime, auth_token: String, score_insert_request: ScoreInsertRequest) {
     let https = HttpsConnector::new(4).expect("TLS initialization failed");
     let client = Client::builder().build::<_, hyper::Body>(https);
     let request = Request::post("https://hoppinworld.net:27015/submitscore")
@@ -344,7 +270,6 @@ pub fn submit_score(future_runtime: &mut Runtime, queue: &FutureProcessor, auth_
         .body(Body::from(json!(score_insert_request).to_string()))
         .unwrap();
 
-    let queue_ref = queue.queue_ref();
     let future = client
         // Fetch the url...
         .request(request)
@@ -425,9 +350,10 @@ fn main() -> amethyst::Result<()> {
 		allow_env_override: false,
 	});*/
 
-    let resources_directory = get_working_dir();
+    let mut resources_directory = application_root_dir().expect("Failed to get app_root_dir.");
+    resources_directory.push("assets");
 
-    let asset_loader = AssetLoader::new(&format!("{}/assets", resources_directory), "base");
+    let asset_loader = AssetLoader::new(&resources_directory.to_str().unwrap(), "base");
 
     let display_config_path = asset_loader.resolve_path("config/display.ron").unwrap();
     let display_config = DisplayConfig::load(&display_config_path);
@@ -536,7 +462,7 @@ fn main() -> amethyst::Result<()> {
             "bhop_movement",
             &["free_rotation", "jump", "ground_friction", "ground_checker"],
         )
-        .with(GravitySystem, "gravity", &[])
+        //.with(GravitySystem, "gravity", &[])
         .with_bundle(TransformBundle::new().with_dep(&[]))?
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
@@ -544,7 +470,7 @@ fn main() -> amethyst::Result<()> {
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?.with_bundle(UiBundle::<String, String>::new())?
         .with_barrier()
-        .with_bundle(DefaultPhysicsBundle3::<ObjectType>::new().with_spatial())?
+        .with_bundle(PhysicsBundle::new())?
         .with_bundle(RenderBundle::new(pipe, Some(display_config))
             //.with_visibility_sorting(&[])
         )?

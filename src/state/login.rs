@@ -1,7 +1,7 @@
 
 use amethyst_extra::set_discord_state;
 use tokio::runtime::Runtime;
-use {add_removal_to_entity, do_login, Auth, FutureProcessor};
+use {add_removal_to_entity, do_login, Auth};
 use amethyst::prelude::*;
 use amethyst::utils::removal::*;
 use amethyst::ui::*;
@@ -24,20 +24,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
 
     fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
-
-        loop {
-            let myfn = {
-                let mut res = data.world.write_resource::<FutureProcessor>();
-                let mut queue_locked = res.queue.lock().unwrap();
-                let thefn = queue_locked.pop_front();
-                thefn
-            };
-            if let Some(f) = myfn {
-                f(&mut data.world);
-            }else{
-                break;
-            }
-        }
 
         if let Some(_) = data.world.res.try_fetch::<Auth>() {
             return Trans::Switch(Box::new(MainMenuState::default()));
@@ -66,7 +52,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                             let username = data.world.read_storage::<UiText>().get(username_entity).unwrap().text.clone();
                             let password_entity = UiFinder::fetch(&data.world.res).find("password").unwrap();
                             let password = data.world.read_storage::<UiText>().get(password_entity).unwrap().text.clone();
-                            do_login(&mut data.world.write_resource::<Runtime>(), &data.world.read_resource(), username, password);
+                            do_login(&mut data.world.write_resource::<Runtime>(), data.world.read_resource::<CallbackQueue>().send_handle(), username, password);
                             Trans::None
                         },
                         "guest_button" => Trans::Switch(Box::new(MainMenuState::default())),

@@ -18,7 +18,6 @@ tokio = "0.1.7"
 tokio-executor = "0.1.0"
 
 amethyst-extra = { git = "https://github.com/jojolepro/amethyst-extra" }
-amethyst-rhusics = { git = "https://github.com/amethyst/amethyst-rhusics" }
 
 serde = { version = "1", features = ["serde_derive"] }
 log = "0.4"
@@ -35,6 +34,7 @@ hoppinworldruntime = { git = "https://github.com/hoppinworld/runtime" }
 
 amethyst-editor-sync = "0.2"
 serde_json = "1.0.32"
+crossbeam-channel = "0.3.1"
 
 [patch.crates-io]
 amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }

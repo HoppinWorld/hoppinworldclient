@@ -1,12 +1,7 @@
 
-use amethyst_rhusics::collision::primitive::{ConvexPolyhedron, Cylinder, Primitive3};
-use amethyst_rhusics::rhusics_core::physics3d::{Mass3, Velocity3};
-use amethyst_rhusics::rhusics_core::{
-    CollisionMode, CollisionStrategy, ForceAccumulator,
-    PhysicalEntity, Pose
-};
-use amethyst_rhusics::rhusics_ecs::physics3d::BodyPose3;
-use amethyst_rhusics::rhusics_ecs::WithPhysics;
+use amethyst_extra::nphysics_ecs::ncollide::shape::*;
+use amethyst_extra::nphysics_ecs::nphysics::object::Material;
+use amethyst_extra::nphysics_ecs::*;
 use amethyst::ecs::*;
 use amethyst::ecs::prelude::ParallelIterator;
 use amethyst::assets::{ProgressCounter, Handle};
@@ -14,13 +9,13 @@ use amethyst_extra::*;
 use util::gltf_path_from_map;
 use amethyst_gltf::{GltfSceneFormat, GltfSceneOptions};
 use amethyst::controls::FlyControlTag;
-use hoppinworldruntime::{PlayerTag, PlayerSettings, PlayerFeetTag, Shape};
-use amethyst::core::cgmath::{Vector3, Quaternion, Point3, One};
+use hoppinworldruntime::{PlayerTag, PlayerSettings, PlayerFeetTag};
+use amethyst::core::nalgebra::{Vector3, Point3, UnitQuaternion, Matrix3};
 use amethyst::core::*;
-use amethyst::renderer::*;
+use amethyst::renderer::{MeshData, Mesh, DirectionalLight, Light, Camera};
 use verts_from_mesh_data;
 use resource::CurrentMap;
-use hoppinworldruntime::{MyPhysicalEntityParts, ObjectType, AllEvents, RuntimeProgress, CustomTrans, RemovalId, RuntimeMapBuilder};
+use hoppinworldruntime::{ObjectType, AllEvents, RuntimeProgress, CustomTrans, RemovalId, RuntimeMapBuilder};
 use amethyst_extra::AssetLoader;
 use {add_removal_to_entity, Gravity};
 use amethyst::ui::UiCreator;
@@ -113,33 +108,22 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .with(ObjectType::Player)
             .with(jump)
             .with(PlayerTag)
-            .with_dynamic_physical_entity(
-                Shape::new_simple_with_type(
-                    CollisionStrategy::FullResolution,
-                    CollisionMode::Discrete,
-                    //CollisionMode::Continuous,
-                    //Cylinder::new(0.5, 0.2).into(),
-                    player_settings.shape.clone(),
-                    ObjectType::Player,
-                ),
-                BodyPose3::new(
-                    Point3::new(0.,0.,0.),
-                    Quaternion::<f32>::one(),
-                ),
-                Velocity3::default(),
-                player_settings.physical_entity.clone(),
-                Mass3::new(player_settings.mass),
-                //player_settings.mass.clone(),
+            .with(DynamicBody::new_rigidbody(player_settings.mass, Matrix3::<f32>::identity(), Point3::new(0., 0., 0.)))
+            .with(
+                ColliderBuilder::from(ShapeHandle::new(Cylinder::new(0.4, 0.2)))
+                .collision_group(4) // Player
+                .physics_material(Material::new(0.0, 0.0))
+                .build()
+                .unwrap()
             )
             .with(Transform::default())
-            .with(ForceAccumulator::<Vector3<f32>, Vector3<f32>>::new())
             .with(Removal::new(RemovalId::Scene))
             .build();
 
         let mut tr = Transform::default();
         
         // TODO add conf ability to this
-        tr.translation = [0.0, 0.25, 0.0].into();
+        *tr.translation_mut() = [0.0, 0.25, 0.0].into();
         data.world
             .create_entity()
             .with(tr)
@@ -154,21 +138,13 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         data.world
             .create_entity()
             .with(ObjectType::PlayerFeet)
-            .with_static_physical_entity(
-                Shape::new_simple_with_type(
-                    CollisionStrategy::CollisionOnly,
-                    //CollisionStrategy::FullResolution,
-                    CollisionMode::Discrete,
-                    Cylinder::new(0.01, 0.155).into(),
-                    ObjectType::PlayerFeet,
-                ),
-                BodyPose3::new(
-                    Point3::new(0., 0., 0.),
-                    Quaternion::<f32>::one(),
-                ),
-                PhysicalEntity::default(),
-                Mass3::infinite(),
-                //player_settings.mass.clone(),
+            .with(
+                ColliderBuilder::from(ShapeHandle::new(Cylinder::new(0.01, 0.155)))
+                .collision_group(5) // Player Feet
+                .physics_material(Material::new(0.0, 0.0))
+                .trigger()
+                .build()
+                .unwrap()
             )
             .with(PlayerFeetTag)
             .with(Transform::default())
@@ -181,8 +157,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         self.player_entity = Some(player_entity);
 
         let mut tr = Transform::default();
-        tr.translation = [0.0, 10.0, 0.0].into();
-        tr.rotation = Quaternion::one();
+        *tr.translation_mut() = [0.0, 10.0, 0.0].into();
+        *tr.rotation_mut() = UnitQuaternion::identity();
         
         /*data.world
             .create_entity()
@@ -210,7 +186,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         add_removal_to_entity(ui_root, RemovalId::GameplayUi, &data.world);
 
         data.world.add_resource(RuntimeProgress::default());
-        MyPhysicalEntityParts::setup(&mut data.world.res)
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
@@ -227,7 +202,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             )
                 .par_join()
                 .map(|(entity, transform, mesh_data, name)| {
-                    let verts = verts_from_mesh_data(mesh_data, &transform.scale);
+                    let verts = verts_from_mesh_data(mesh_data, &transform.scale());
                     (entity, transform.clone(), verts, name.name.clone())
                 }).collect::<Vec<_>>();
 
@@ -240,29 +215,37 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                 self.init_done = true;
 
                 let max_segment = {
-                	let (mut physical_parts, mut object_types, mut meshes, players, mut removals) = <(MyPhysicalEntityParts, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<PlayerTag>, WriteStorage<Removal<RemovalId>>) as SystemData>::fetch(&data.world.res);
+                	let (mut transforms, mut colliders, mut object_types, mut meshes, players, mut removals) = <(WriteStorage<Transform>, WriteStorage<Collider>, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<PlayerTag>, WriteStorage<Removal<RemovalId>>) as SystemData>::fetch(&data.world.res);
+
+                    let mut start_zone_pos = None;
+                    let mut start_zone_rotation = None;
+
                     for (entity, transform, mesh, name) in entity_sizes {
                         let (obj_type, coll_strat) = if name == "StartZone" {
                             // Move player to StartZone
-		                    for (mut body_pose, _) in (&mut physical_parts.next_poses, &players).join() {
-		                        body_pose.value.set_position(Point3::new(transform.translation.x, transform.translation.y, transform.translation.z));
-		                        body_pose.value.set_rotation(transform.rotation);
-		                    }
+	                        start_zone_pos = Some(transform.translation().clone());
+                            start_zone_rotation = Some(transform.rotation().clone());
+
 		                    if runtime_map.start_zone.is_some() {
 		                    	panic!("There can be only one StartZone per map");
 		                    }
+
 		                    runtime_map = runtime_map.start_zone(entity);
-                            (ObjectType::StartZone, CollisionStrategy::CollisionOnly)
+
+                            (ObjectType::StartZone, ColliderType::Trigger)
                         } else if name == "EndZone" {
+
                         	if runtime_map.end_zone.is_some() {
 		                    	panic!("There can be only one EndZone per map");
 		                    }
+
                         	runtime_map = runtime_map.end_zone(entity);
-                            (ObjectType::EndZone, CollisionStrategy::CollisionOnly)
+
+                            (ObjectType::EndZone, ColliderType::Trigger)
                         } else if name.starts_with("KillZone") {
-                            (ObjectType::KillZone, CollisionStrategy::CollisionOnly)
+                            (ObjectType::KillZone, ColliderType::Trigger)
                         } else if name.starts_with("Ignore") {
-                            (ObjectType::Ignore, CollisionStrategy::CollisionOnly)
+                            (ObjectType::Ignore, ColliderType::Trigger)
                         } else if name.starts_with("SegmentZone") {
                             let id_str = &name[11..];
                             let id = id_str.to_string().parse::<u8>().unwrap(); // TODO error handling for maps
@@ -271,9 +254,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                             }
 
                             runtime_map.segment_zones.push((id,entity));
-                            (ObjectType::SegmentZone(id),CollisionStrategy::CollisionOnly)
+                            (ObjectType::SegmentZone(id),ColliderType::Trigger)
                         } else {
-                            (ObjectType::Scene, CollisionStrategy::FullResolution)
+                            (ObjectType::Scene, ColliderType::Collider)
                         };
 
                         if name.contains("Invisible") {
@@ -283,31 +266,22 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                         }
 
                         object_types
-                            .insert(entity, obj_type.clone())
+                            .insert(entity, obj_type)
                             .expect("Failed to add ObjectType to map mesh");
-                        physical_parts
-                            .static_entity(
-                                entity,
-                                Shape::new_simple_with_type(
-                                    coll_strat,
-                                    CollisionMode::Discrete,
-                                    Primitive3::ConvexPolyhedron(<ConvexPolyhedron<f32>>::new(
-                                        mesh,
-                                    )),
-                                    obj_type,
-                                ),
-                                BodyPose3::new(
-                                    Point3::new(
-                                        transform.translation.x,
-                                        transform.translation.y,
-                                        transform.translation.z,
-                                    ),
-                                    transform.rotation,
-                                ),
-                                PhysicalEntity::default(),
-                                Mass3::infinite(),
-                            ).expect("Failed to add static collider to map mesh");
+                        colliders.insert(entity,
+                            ColliderBuilder::from(ShapeHandle::new(ConvexHull::try_from_points(&mesh).expect("Non convex mesh in scene!")))
+                            .collision_group(obj_type.into()) // Scene
+                            .physics_material(Material::new(0.0, 0.0))
+                            .build()
+                            .unwrap()
+                        ).expect("Failed to add Collider to map mesh");
                         removals.insert(entity, Removal::new(RemovalId::Scene)).unwrap();
+                    }
+
+
+                    for (mut tr, _) in (&mut transforms, &players).join() {
+                        *tr.translation_mut() = start_zone_pos.expect("No start zone in scene.");
+                        *tr.rotation_mut() = start_zone_rotation.expect("No start zone in scene.");
                     }
 
                 	max_segment

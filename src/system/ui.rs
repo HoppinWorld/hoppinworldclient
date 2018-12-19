@@ -1,11 +1,11 @@
+use amethyst_extra::nphysics_ecs::DynamicBody;
 use RelativeTimer;
 use hoppinworlddata::PlayerStats;
-use amethyst_rhusics::rhusics_core::physics3d::Velocity3;
 use amethyst_extra::Jump;
 use amethyst::ui::{UiTransform, UiText};
-use amethyst::core::cgmath::{Vector3, InnerSpace};
+use amethyst::core::nalgebra::{Vector3};
 use hoppinworldruntime::{PlayerTag,RuntimeProgress};
-use avg_float_to_string;
+use sec_to_display;
 pub use amethyst::ecs::{System, Read,ReadStorage, WriteStorage, Join};
 
 const DISPLAY_SPEED_MULTIPLIER: f32 = 50.0;
@@ -17,7 +17,7 @@ impl<'a> System<'a> for UiUpdaterSystem {
     type SystemData = (
         Read<'a, RelativeTimer>,
         Read<'a, PlayerStats>,
-        ReadStorage<'a, Velocity3<f32>>,
+        ReadStorage<'a, DynamicBody>,
         ReadStorage<'a, Jump>,
         ReadStorage<'a, UiTransform>,
         WriteStorage<'a, UiText>,
@@ -25,11 +25,11 @@ impl<'a> System<'a> for UiUpdaterSystem {
         Read<'a, RuntimeProgress>,
     );
 
-fn run(&mut self, (timer, _stat, velocities, _jumps, ui_transforms, mut texts, players, runtime_progress): Self::SystemData){
+fn run(&mut self, (timer, _stat, rigid_bodies, _jumps, ui_transforms, mut texts, players, runtime_progress): Self::SystemData){
         for (ui_transform, mut text) in (&ui_transforms, &mut texts).join() {
             match &*ui_transform.id {
                 "timer" => {
-                    text.text = timer.get_text();
+                    text.text = timer.get_text(3);
                 }
                 "pb" => {}
                 "wr" => {}
@@ -37,12 +37,14 @@ fn run(&mut self, (timer, _stat, velocities, _jumps, ui_transforms, mut texts, p
                     text.text = runtime_progress.current_segment.to_string();
                 }
                 "speed" => {
-                    for (_, velocity) in (&players, &velocities).join() {
-                        let vel = velocity.linear();
-                        let vel_flat = Vector3::new(vel.x, 0.0, vel.z);
-                        let mag = vel_flat.magnitude() * DISPLAY_SPEED_MULTIPLIER;
+                    for (_, rb) in (&players, &rigid_bodies).join() {
+                        if let DynamicBody::RigidBody(ref rb) = &rb {
+                            let vel = rb.velocity.linear;
+                            let vel_flat = Vector3::new(vel.x, 0.0, vel.z);
+                            let mag = vel_flat.magnitude() * DISPLAY_SPEED_MULTIPLIER;
 
-                        text.text = avg_float_to_string(mag, 1);
+                            text.text = sec_to_display(mag.into(), 1);
+                        }
                     }
                 }
                 _ => {}
