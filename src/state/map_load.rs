@@ -1,5 +1,6 @@
 
 use amethyst_extra::nphysics_ecs::ncollide::shape::*;
+//use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
 use amethyst_extra::nphysics_ecs::nphysics::object::Material;
 use amethyst_extra::nphysics_ecs::*;
 use amethyst::ecs::*;
@@ -98,6 +99,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             }).build()
         );
 
+        let shape = ShapeHandle::new(Cylinder::new(0.4, 0.2));
+        //let shape = ShapeHandle::new(Ball::new(0.2));
         let player_entity = data
             .world
             .create_entity()
@@ -108,14 +111,15 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .with(ObjectType::Player)
             .with(jump)
             .with(PlayerTag)
-            .with(DynamicBody::new_rigidbody(player_settings.mass, Matrix3::<f32>::identity(), Point3::new(0., 0., 0.)))
+            .with(DynamicBody::new_rigidbody(player_settings.mass, Matrix3::<f32>::identity(), Point3::new(0.0, 0.0, 0.0)))
             .with(
-                ColliderBuilder::from(ShapeHandle::new(Cylinder::new(0.4, 0.2)))
+                ColliderBuilder::from(shape)
                 .collision_group(4) // Player
                 .physics_material(Material::new(0.0, 0.0))
                 .build()
                 .unwrap()
             )
+            .with(GlobalTransform::default())
             .with(Transform::default())
             .with(Removal::new(RemovalId::Scene))
             .build();
@@ -146,6 +150,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                 .build()
                 .unwrap()
             )
+            .with(GlobalTransform::default())
             .with(PlayerFeetTag)
             .with(Transform::default())
             .with(Removal::new(RemovalId::Scene))
@@ -181,7 +186,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .build();
 
         let ui_root = data.world.exec(|mut creator: UiCreator| {
-            creator.create("assets/base/prefabs/gameplay_ui.ron", ())
+            creator.create("base/prefabs/gameplay_ui.ron", ())
         });
         add_removal_to_entity(ui_root, RemovalId::GameplayUi, &data.world);
 
@@ -215,7 +220,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                 self.init_done = true;
 
                 let max_segment = {
-                	let (mut transforms, mut colliders, mut object_types, mut meshes, players, mut removals) = <(WriteStorage<Transform>, WriteStorage<Collider>, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<PlayerTag>, WriteStorage<Removal<RemovalId>>) as SystemData>::fetch(&data.world.res);
+                	let (mut transforms, mut colliders, mut object_types, mut meshes, players, mut removals, mut global_transforms) = <(WriteStorage<Transform>, WriteStorage<Collider>, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<PlayerTag>, WriteStorage<Removal<RemovalId>>, WriteStorage<GlobalTransform>) as SystemData>::fetch(&data.world.res);
 
                     let mut start_zone_pos = None;
                     let mut start_zone_rotation = None;
@@ -272,14 +277,16 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                             Some(handle) => {
                                 colliders.insert(entity,
                                     ColliderBuilder::from(ShapeHandle::new(handle))
-                                    .collision_group(obj_type.into()) // Scene
+                                    .collision_group(obj_type.into()) // Scene or zones
                                     .physics_material(Material::new(0.0, 0.0))
+                                    .query_type(coll_strat)
                                     .build()
                                     .unwrap()
                                 ).expect("Failed to add Collider to map mesh");
                             },
                             None => error!("Non-Convex mesh in scene! Mesh: {:?}", mesh),
                         }
+                        global_transforms.insert(entity, GlobalTransform(transform.matrix())).unwrap();
                         removals.insert(entity, Removal::new(RemovalId::Scene)).unwrap();
                     }
 

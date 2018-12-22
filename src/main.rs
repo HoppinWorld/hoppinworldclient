@@ -441,7 +441,7 @@ fn main() -> amethyst::Result<()> {
             "gltf_loader",
             &["map_loader"],
         ).with(
-            FPSRotationRhusicsSystem::<String, String>::new(0.3, 0.3),
+            FPSRotationRhusicsSystem::<String, String>::new(0.005, 0.005),
             "free_rotation",
             &[],
         ).with(MouseFocusUpdateSystem::new(), "mouse_focus", &[])
