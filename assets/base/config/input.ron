@@ -2,9 +2,11 @@
   axes: { 
     "forward": Emulated(pos: Key(S), neg: Key(W)),
     "right": Emulated(pos: Key(D), neg: Key(A)),
+    "up": Emulated(pos: Key(E), neg: Key(Q)),
   }, 
   actions: { 
     "jump": [[Key(Space)]],
     "pause": [[Key(Escape)]],
+    "noclip": [[Key(C)]],
   },
 )

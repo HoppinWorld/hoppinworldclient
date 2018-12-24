@@ -35,7 +35,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
         for (accum, (internal, info)) in maps.into_iter().enumerate() {
             info!("adding map!");
             let entity =
-                UiButtonBuilder::new(format!("map_select_{}", internal), info.name.clone())
+                UiButtonBuilder::<()>::new(format!("map_select_{}", internal), info.name.clone())
                     .with_font(font.clone())
                     .with_text_color([0.2, 0.2, 0.2, 1.0])
                     .with_font_size(30.0)

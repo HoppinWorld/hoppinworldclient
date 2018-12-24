@@ -19,7 +19,7 @@ extern crate ron;
 extern crate uuid;
 extern crate hoppinworlddata;
 extern crate hoppinworldruntime;
-//extern crate amethyst_editor_sync;
+extern crate amethyst_editor_sync;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate tokio;
@@ -30,6 +30,7 @@ extern crate crossbeam_channel;
 /*#[macro_use]
 extern crate derive_builder;*/
 
+use amethyst::controls::*;
 use amethyst::core::nalgebra::Point3;
 use crossbeam_channel::Sender;
 use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
@@ -37,7 +38,7 @@ use amethyst_extra::nphysics_ecs::*;
 use amethyst::utils::application_root_dir;
 use hoppinworldruntime::*;
 use std::sync::{Arc, Mutex};
-//use amethyst_editor_sync::*;
+use amethyst_editor_sync::*;
 use amethyst::utils::removal::Removal;
 use std::collections::VecDeque;
 use amethyst::assets::Prefab;
@@ -48,7 +49,7 @@ use amethyst::controls::{
     CursorHideSystem, MouseFocusUpdateSystem
 };
 use amethyst::core::transform::TransformBundle;
-use amethyst::core::Time;
+use amethyst::core::{Time, Transform, Named};
 use amethyst::ecs::{
     Entities, Entity, Join, Read, ReadStorage, Resources,
     System, SystemData, Write, WriteStorage,
@@ -56,7 +57,7 @@ use amethyst::ecs::{
 use amethyst::input::InputBundle;
 use amethyst::prelude::*;
 use amethyst::renderer::{MeshData, ALPHA, ColorMask,
-    DepthMode, RenderBundle, DrawPbmSeparate, Pipeline, DisplayConfig, Stage};
+    DepthMode, RenderBundle, DrawPbmSeparate, Pipeline, DisplayConfig, Stage, AmbientColor, Camera, Light};
 use amethyst::shrev::{EventChannel, ReaderId};
 use amethyst::ui::*;
 use amethyst_gltf::*;
@@ -374,33 +375,14 @@ fn main() -> amethyst::Result<()> {
     // Issue: thread '<unnamed>' panicked at 'Failed to send message: Os { code: 111, kind: ConnectionRefused, message: "Connection refused" }
     //   a.k.a can't run without the editor open, which is not really convenient ^^
 
-    /*let editor_bundle = SyncEditorBundle::new()
-    .sync_component::<Transform>("Transform")
-    .sync_component::<BodyPose3<f32>>("BodyPose")
-    .sync_component::<UiTransform>("UiTransform")
-    //.sync_component::<MeshData>("MeshData") // Bug: Failed to serialize
-    .sync_component::<UiText>("UiText")
-    .sync_component::<Removal<RemovalId>>("Removal")
-    .sync_component::<Mass3<f32>>("Mass")
-    .sync_component::<Velocity3<f32>>("Velocity")
-    .sync_component::<NextFrame<Velocity3<f32>>>("NextVelocity")
-    .sync_component::<NextFrame<BodyPose3<f32>>>("NextBodyPose")
-    .sync_component::<ObjectType>("Collider:ObjectType")
-    .sync_component::<BhopMovement3D>("BhopMovement3D")
-    .sync_component::<Player>("Player")
-    .sync_component::<UiButton>("UiButton")
-    .sync_component::<FlyControlTag>("FlyControlTag")
-    .sync_component::<Shape>("Shape")
-    .sync_component::<ForceAccumulator<f32, f32>>("ForceAccumulator")
-    .sync_component::<RotationControl>("RotationControl")
-    .sync_component::<Camera>("Camera")
-    //.sync_component::<Parent>("Parent")
-    .sync_component::<Light>("Light")
-    .sync_component::<Named>("Named")
+    /*let components = type_set![Transform, UiTransform, UiText, Removal<RemovalId>, ObjectType, BhopMovement3D, UiButton, FlyControlTag,RotationControl, Camera,Light, Named];
+
+    let editor_bundle = SyncEditorBundle::new()
+    .sync_components(&components)
     //.sync_component::<Primitive3<f32>>("Collider:Primitive")
     .sync_resource::<Gravity>("Gravity")
-    .sync_resource::<RelativeTimer>("RelativeTimer")
-    .sync_resource::<RuntimeProgress>("RuntimeProgress")
+    //.sync_resource::<RelativeTimer>("RelativeTimer")
+    //.sync_resource::<RuntimeProgress>("RuntimeProgress")
     //.sync_resource::<RuntimeStats>("RuntimeStats") // Not present on game start
     //.sync_resource::<RuntimeMap>("RuntimeMap")
     .sync_resource::<AmbientColor>("AmbientColor")
@@ -428,6 +410,8 @@ fn main() -> amethyst::Result<()> {
 
             ).with_pass(DrawUi::new()),
     );
+
+    let noclip = NoClip::new(String::from("noclip"));
 
     let game_data = GameDataBuilder::default()
         .with(RelativeTimerSystem, "relative_timer", &[])
@@ -466,6 +450,9 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(TransformBundle::new().with_dep(&[]))?
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
+        //.with(NoClipToggleSystem::<String>::default(), "noclip_toggle", &[])
+        //.with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
+        //.with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?.with_bundle(UiBundle::<String, String>::new())?
@@ -481,7 +468,8 @@ fn main() -> amethyst::Result<()> {
     let mut game_builder = CoreApplication::<_, AllEvents, AllEventsReader>::build(resources_directory, InitState::default())?
         .with_resource(asset_loader)
         .with_resource(AssetLoaderInternal::<FontAsset>::new())
-        .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new());
+        .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new())
+        .with_resource(noclip);
     if let Ok(discord) = init_discord_rich_presence() {
         game_builder = game_builder.with_resource(discord);
     }

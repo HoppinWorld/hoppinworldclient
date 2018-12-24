@@ -48,7 +48,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
         for (segment, time) in runtime_progress.segment_times.iter().enumerate() {
             // Accum
             data.world.create_entity()
-                .with(UiTransform::new(String::from(""), Anchor::TopMiddle, -200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
+                .with(UiTransform::new(String::from(""), Anchor::TopMiddle, -200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0))
                 .with(UiText::new(font.clone(), sec_to_display(*time, 3), [0.1,0.1,0.1,1.0], 35.0))
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();
@@ -65,7 +65,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
 
             // Segment
             data.world.create_entity()
-                .with(UiTransform::new(String::from(""), Anchor::TopMiddle, 200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0, -1))
+                .with(UiTransform::new(String::from(""), Anchor::TopMiddle, 200.0, -350.0 - 100.0 * segment as f32, 3.0, 200.0, 100.0))
                 .with(UiText::new(font.clone(), sec_to_display(diff, 3), [0.1,0.1,0.1,1.0], 35.0))
                 .with(Removal::new(RemovalId::ResultUi))
                 .build();

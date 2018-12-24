@@ -11,7 +11,7 @@ use util::gltf_path_from_map;
 use amethyst_gltf::{GltfSceneFormat, GltfSceneOptions};
 use amethyst::controls::FlyControlTag;
 use hoppinworldruntime::{PlayerTag, PlayerSettings, PlayerFeetTag};
-use amethyst::core::nalgebra::{Vector3, Point3, UnitQuaternion, Matrix3};
+use amethyst::core::nalgebra::{Vector3, Point3, UnitQuaternion, Matrix3, Isometry3};
 use amethyst::core::*;
 use amethyst::renderer::{MeshData, Mesh, DirectionalLight, Light, Camera};
 use verts_from_mesh_data;
