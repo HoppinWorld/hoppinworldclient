@@ -450,9 +450,9 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(TransformBundle::new().with_dep(&[]))?
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
-        //.with(NoClipToggleSystem::<String>::default(), "noclip_toggle", &[])
-        //.with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
-        //.with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
+        .with(NoClipToggleSystem::<String>::default(), "noclip_toggle", &[])
+        .with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
+        .with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?.with_bundle(UiBundle::<String, String>::new())?

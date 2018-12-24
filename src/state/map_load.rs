@@ -176,14 +176,14 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             })).with(Removal::new(RemovalId::Scene))
             .build();*/
 
-        data.world
+        /*data.world
             .create_entity()
             .with(tr)
             .with(Light::Directional(DirectionalLight {
                 color: [1.0, 1.0, 1.0, 1.0].into(),
                 direction: [0.1, -1.0, 0.05],
             })).with(Removal::new(RemovalId::Scene))
-            .build();
+            .build();*/
 
         let ui_root = data.world.exec(|mut creator: UiCreator| {
             creator.create("base/prefabs/gameplay_ui.ron", ())
