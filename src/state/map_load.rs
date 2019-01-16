@@ -1,7 +1,9 @@
 
 use amethyst_extra::nphysics_ecs::ncollide::shape::*;
 //use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
-use amethyst_extra::nphysics_ecs::nphysics::object::Material;
+use amethyst_extra::nphysics_ecs::nphysics::object::Material as PhysicsMaterial;
+use amethyst_extra::nphysics_ecs::nphysics::object::BodyStatus;
+use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
 use amethyst_extra::nphysics_ecs::*;
 use amethyst::ecs::*;
 use amethyst::ecs::prelude::ParallelIterator;
@@ -13,7 +15,7 @@ use amethyst::controls::FlyControlTag;
 use hoppinworldruntime::{PlayerTag, PlayerSettings, PlayerFeetTag};
 use amethyst::core::nalgebra::{Vector3, Point3, UnitQuaternion, Matrix3, Isometry3};
 use amethyst::core::*;
-use amethyst::renderer::{MeshData, Mesh, DirectionalLight, Light, Camera};
+use amethyst::renderer::{MeshData, Mesh, DirectionalLight, Light, Camera, Shape, PosTex};
 use verts_from_mesh_data;
 use resource::CurrentMap;
 use hoppinworldruntime::{ObjectType, AllEvents, RuntimeProgress, CustomTrans, RemovalId, RuntimeMapBuilder};
@@ -24,6 +26,7 @@ use amethyst::utils::removal::Removal;
 use amethyst::prelude::*;
 use state::{MapSelectState, GameplayState};
 use partial_function::PartialFunctionBuilder;
+use num_traits::identities::One;
 
 #[derive(Default)]
 pub struct MapLoadState {
@@ -99,25 +102,46 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             }).build()
         );
 
-        let shape = ShapeHandle::new(Cylinder::new(0.4, 0.2));
+        let mut grounded = player_settings.grounded.clone();
+
+        let player_scale = Vector3::new(0.2, 0.4, 0.2); // Half the desired size
+        let player_rotation = UnitQuaternion::from_euler_angles(std::f32::consts::FRAC_PI_2, 0.0, 0.0);
+        let s = Shape::Cylinder(12, None).generate_vertices::<Vec<PosTex>>(None).into_iter().map(|mut pt| {
+            pt.position = player_rotation * pt.position;
+            pt.position.x *= player_scale.x;
+            pt.position.y *= player_scale.y;
+            pt.position.z *= player_scale.z;
+            Point3::from(pt.position)
+        }).collect::<Vec<_>>();
+        let s2 = Shape::Cylinder(12, None).generate_vertices::<Vec<PosTex>>(None).into_iter().map(|mut pt| {
+            pt.position = player_rotation * pt.position;
+            pt.position.x *= player_scale.x * 0.9;
+            pt.position.y *= 0.1;
+            pt.position.z *= player_scale.z * 0.9;
+            Point3::from(pt.position)
+        }).collect::<Vec<_>>();
+        //let shape = ShapeHandle::new(Cylinder::new(0.4, 0.2));
         //let shape = ShapeHandle::new(Ball::new(0.2));
+        let shape = ShapeHandle::new(ConvexHull::try_from_points(&s).expect("Failed to create player collision hull from points"));
+        let feet_shape = ShapeHandle::new(ConvexHull::try_from_points(&s2).expect("Failed to create player feet collision hull from points"));
         let player_entity = data
             .world
             .create_entity()
-            .with(player_settings.movement) 
-            .with(player_settings.grounded)
+            .with(player_settings.movement)
             .with(player_settings.ground_friction)
             .with(FlyControlTag)
             .with(ObjectType::Player)
             .with(jump)
             .with(PlayerTag)
-            .with(DynamicBody::new_rigidbody(player_settings.mass, Matrix3::<f32>::identity(), Point3::new(0.0, 0.0, 0.0)))
+            //.with(UprightTag)
+            //.with(DynamicBody::new_rigidbody(player_settings.mass, Matrix3::one(), Point3::new(0.0, 0.0, 0.0)))
+            .with(DynamicBody::new_rigidbody(player_settings.mass, Matrix3::one(), shape.center_of_mass()))
             .with(
                 ColliderBuilder::from(shape)
-                .collision_group(4) // Player
-                .physics_material(Material::new(0.0, 0.0))
-                .build()
-                .unwrap()
+                    .collision_group(4) // Player
+                    .physics_material(PhysicsMaterial::new(0.0, 0.0))
+                    .build()
+                    .unwrap()
             )
             .with(GlobalTransform::default())
             .with(Transform::default())
@@ -133,22 +157,23 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .with(tr)
             .with(RotationControl::default())
             .with(Camera::standard_3d(1920.0, 1080.0))
+            .with(Removal::new(RemovalId::Scene))
             .with(Parent {
                 entity: player_entity.clone(),
             }).build();
 
-
         // Secondary ground collider
-        data.world
+        let ground_collider = data.world
             .create_entity()
             .with(ObjectType::PlayerFeet)
             .with(
-                ColliderBuilder::from(ShapeHandle::new(Cylinder::new(0.01, 0.155)))
-                .collision_group(5) // Player Feet
-                .physics_material(Material::new(0.0, 0.0))
-                .trigger()
-                .build()
-                .unwrap()
+                //ColliderBuilder::from(ShapeHandle::new(Cylinder::new(0.01, 0.155)))
+                ColliderBuilder::from(feet_shape)
+                    .collision_group(5) // Player Feet
+                    .physics_material(PhysicsMaterial::new(0.0, 0.0))
+                    .trigger()
+                    .build()
+                    .unwrap()
             )
             .with(GlobalTransform::default())
             .with(PlayerFeetTag)
@@ -157,7 +182,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .build();
 
         // Assign secondary collider to player's Grounded component
-        //(&mut data.world.write_storage::<Grounded>()).join().for_each(|grounded| grounded.watch_entity = Some(secondary.clone()));
+        grounded.watch_entity = Some(ground_collider);
+        data.world.write_storage::<Grounded>().insert(player_entity, grounded).unwrap();
 
         self.player_entity = Some(player_entity);
 
@@ -220,7 +246,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                 self.init_done = true;
 
                 let max_segment = {
-                	let (mut transforms, mut colliders, mut object_types, mut meshes, players, mut removals, mut global_transforms) = <(WriteStorage<Transform>, WriteStorage<Collider>, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<PlayerTag>, WriteStorage<Removal<RemovalId>>, WriteStorage<GlobalTransform>) as SystemData>::fetch(&data.world.res);
+                	let (mut transforms, mut colliders, mut object_types, mut meshes, players, mut removals, mut global_transforms, mut ground_checks) = <(WriteStorage<Transform>, WriteStorage<Collider>, WriteStorage<ObjectType>, WriteStorage<Handle<Mesh>>, ReadStorage<PlayerTag>, WriteStorage<Removal<RemovalId>>, WriteStorage<GlobalTransform>, WriteStorage<GroundCheckTag>) as SystemData>::fetch(&data.world.res);
 
                     let mut start_zone_pos = None;
                     let mut start_zone_rotation = None;
@@ -278,13 +304,16 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                                 colliders.insert(entity,
                                     ColliderBuilder::from(ShapeHandle::new(handle))
                                     .collision_group(obj_type.into()) // Scene or zones
-                                    .physics_material(Material::new(0.0, 0.0))
+                                    .physics_material(PhysicsMaterial::new(0.0, 0.0))
                                     .query_type(coll_strat)
                                     .build()
                                     .unwrap()
                                 ).expect("Failed to add Collider to map mesh");
                             },
                             None => error!("Non-Convex mesh in scene! Mesh: {:?}", mesh),
+                        }
+                        if obj_type == ObjectType::Scene {
+                            ground_checks.insert(entity, GroundCheckTag).unwrap();
                         }
                         global_transforms.insert(entity, GlobalTransform(transform.matrix())).unwrap();
                         removals.insert(entity, Removal::new(RemovalId::Scene)).unwrap();
@@ -294,6 +323,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                     for (mut tr, _) in (&mut transforms, &players).join() {
                         *tr.translation_mut() = start_zone_pos.expect("No start zone in scene.");
                         *tr.rotation_mut() = start_zone_rotation.expect("No start zone in scene.");
+
+                        //*tr.translation_mut() = Vector3::new(0.0, 10.0, 10.0);
                     }
 
                 	max_segment

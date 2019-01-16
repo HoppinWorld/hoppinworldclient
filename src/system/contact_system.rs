@@ -13,6 +13,7 @@ use amethyst::core::nalgebra::{Point3, Vector2, Vector3};
 #[derive(Default)]
 pub struct ContactSystem {
     contact_reader: Option<ReaderId<EntityProximityEvent>>,
+    collision_reader: Option<ReaderId<EntityContactEvent>>,
 }
 
 impl<'a> System<'a> for ContactSystem {
@@ -28,6 +29,7 @@ impl<'a> System<'a> for ContactSystem {
         WriteStorage<'a, DynamicBody>,
         Write<'a, EventChannel<CustomStateEvent>>,
         Write<'a, RuntimeProgress>,
+        Read<'a, EventChannel<EntityContactEvent>>,
     );
 
     fn run(
@@ -44,10 +46,18 @@ impl<'a> System<'a> for ContactSystem {
             mut rigid_bodies,
             mut state_eventchannel,
             mut runtime_progress,
+            contacts2
         ): Self::SystemData,
     ) {
+        // Contact events
+        /*for contact in contacts2.read(&mut self.collision_reader.as_mut().unwrap()) {
+            info!("coll collision");
+        }*/
+
+        // Proximity events
         for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
-            //info!("Collision: {:?}",contact);
+
+            info!("Collision: {:?}",contact);
             let type1 = object_types.get(contact.0);
             let type2 = object_types.get(contact.1);
 
@@ -105,7 +115,7 @@ impl<'a> System<'a> for ContactSystem {
                     state_eventchannel.single_write(CustomStateEvent::MapFinished);
                 }
                 ObjectType::KillZone => {
-                    info!("you are ded!");
+                    warn!("you are ded!");
                     let seg = runtime_progress.current_segment;
                     let pos = if seg == 1 {
                         // To start zone
@@ -124,7 +134,9 @@ impl<'a> System<'a> for ContactSystem {
                     };
 
                     // Move the player
-                    (&players, &mut transforms).join().for_each(|(_, tr)| *tr.translation_mut() = pos);
+                    (&players, &mut transforms).join().for_each(|(_, tr)| {
+                        *tr.translation_mut() = pos;
+                    });
                 }
                 ObjectType::SegmentZone(id) => {
                     if *id >= runtime_progress.current_segment {
@@ -142,6 +154,10 @@ impl<'a> System<'a> for ContactSystem {
         Self::SystemData::setup(res);
         self.contact_reader = Some(
             res.fetch_mut::<EventChannel<EntityProximityEvent>>()
+                .register_reader(),
+        );
+        self.collision_reader = Some(
+            res.fetch_mut::<EventChannel<EntityContactEvent>>()
                 .register_reader(),
         );
     }

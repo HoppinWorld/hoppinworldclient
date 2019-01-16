@@ -25,6 +25,7 @@ extern crate hyper_tls;
 extern crate tokio;
 extern crate tokio_executor;
 extern crate crossbeam_channel;
+extern crate num_traits;
 
 
 /*#[macro_use]
@@ -431,7 +432,8 @@ fn main() -> amethyst::Result<()> {
         ).with(MouseFocusUpdateSystem::new(), "mouse_focus", &[])
         .with(CursorHideSystem::new(), "cursor_hide", &[])
         .with(PlayerFeetSync, "feet_sync", &[])
-        .with(ColliderGroundedSystem::default(), "ground_checker", &["feet_sync"]) // TODO: Runs one frame late
+        //.with(ColliderGroundedSystem::default(), "ground_checker", &["feet_sync"]) // TODO: Runs one frame late
+        .with(GroundCheckerSystem::new(Vec::<ObjectType>::new()), "ground_checker", &["feet_sync"])
         // Important to have this after ground checker and before jump.
         .with(JumpSystem::default(), "jump", &["ground_checker"])
         .with(
@@ -447,17 +449,18 @@ fn main() -> amethyst::Result<()> {
             &["free_rotation", "jump", "ground_friction", "ground_checker"],
         )
         //.with(GravitySystem, "gravity", &[])
-        .with_bundle(TransformBundle::new().with_dep(&[]))?
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
+        .with_bundle(TransformBundle::new().with_dep(&["free_rotation", "feet_sync", "contacts"]))?
         .with(NoClipToggleSystem::<String>::default(), "noclip_toggle", &[])
-        .with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
-        .with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
+        //.with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
+        //.with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?.with_bundle(UiBundle::<String, String>::new())?
         .with_barrier()
         .with_bundle(PhysicsBundle::new())?
+        //.with(ForceUprightSystem::default(), "force_upright", &["sync_bodies_from_physics_system"])
         .with_bundle(RenderBundle::new(pipe, Some(display_config))
             //.with_visibility_sorting(&[])
         )?

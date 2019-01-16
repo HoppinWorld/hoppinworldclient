@@ -10,6 +10,7 @@ amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworl
 amethyst_gltf = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
 amethyst_core = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld" }
 
+num-traits = "0.2"
 
 hyper = "0.12.11"
 hyper-tls = "0.3.1"

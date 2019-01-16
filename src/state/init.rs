@@ -7,8 +7,9 @@ use amethyst::core::nalgebra::Vector3;
 use state::login::LoginState;
 use amethyst::prelude::*;
 use amethyst::utils::removal::*;
-use hoppinworldruntime::{PlayerSettings, ObjectType, AllEvents, CustomTrans, RemovalId};
+use hoppinworldruntime::{PlayerSettings, ObjectType, AllEvents, CustomTrans, RemovalId, generate_collision_matrix};
 use tokio::runtime::Runtime;
+use amethyst_extra::nphysics_ecs::*;
 
 #[derive(Default)]
 pub struct InitState;
@@ -33,6 +34,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
         //let mut runtime = Arc::new(Mutex::new(Runtime::new().expect("Failed to create tokio runtime")));
         let runtime = Runtime::new().expect("Failed to create tokio runtime");
         data.world.add_resource(runtime);
+
+        data.world.write_resource::<PhysicsWorld>().collision_world_mut().collision_matrix = generate_collision_matrix();
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
