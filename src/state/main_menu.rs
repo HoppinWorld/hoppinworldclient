@@ -1,11 +1,10 @@
-
-use amethyst_extra::set_discord_state;
 use add_removal_to_entity;
 use amethyst::prelude::*;
-use amethyst::utils::removal::*;
 use amethyst::ui::*;
-use state::*;
+use amethyst::utils::removal::*;
+use amethyst_extra::set_discord_state;
 use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
+use state::*;
 
 #[derive(Default)]
 pub struct MainMenuState;
@@ -25,11 +24,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MainMenuState {
         Trans::None
     }
 
-    fn handle_event(
-        &mut self,
-        data: StateData<GameData>,
-        event: AllEvents,
-    ) -> CustomTrans<'a, 'b> {
+    fn handle_event(&mut self, data: StateData<GameData>, event: AllEvents) -> CustomTrans<'a, 'b> {
         match event {
             AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,

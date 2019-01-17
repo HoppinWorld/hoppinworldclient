@@ -1,4 +1,3 @@
-
 use MapInfoCache;
 
 pub fn get_all_maps(base_path: &str) -> MapInfoCache {
@@ -19,13 +18,15 @@ pub fn get_all_maps(base_path: &str) -> MapInfoCache {
                 .to_str()
                 .unwrap()
                 == "hop"
-        }).map(|e| {
+        })
+        .map(|e| {
             let info_file_data = std::fs::read_to_string(e.to_str().unwrap()).unwrap();
             let info =
                 ron::de::from_str(&info_file_data).expect("Failed to deserialize info map file.");
 
             Some((e.file_stem().unwrap().to_str().unwrap().to_string(), info))
-        }).flatten()
+        })
+        .flatten()
         .collect::<Vec<_>>();
     MapInfoCache::new(map_info_vec)
 }

@@ -1,13 +1,12 @@
-
+use amethyst::ecs::SystemData;
+use amethyst::prelude::*;
+use amethyst::ui::*;
+use amethyst::utils::removal::*;
 use amethyst_extra::set_discord_state;
+use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
+use state::*;
 use tokio::runtime::Runtime;
 use {add_removal_to_entity, do_login, Auth};
-use amethyst::prelude::*;
-use amethyst::utils::removal::*;
-use amethyst::ui::*;
-use amethyst::ecs::SystemData;
-use state::*;
-use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
 
 #[derive(Default)]
 pub struct LoginState;
@@ -35,26 +34,46 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
         Trans::None
     }
 
-    fn handle_event(
-        &mut self,
-        data: StateData<GameData>,
-        event: AllEvents,
-    ) -> CustomTrans<'a, 'b> {
+    fn handle_event(&mut self, data: StateData<GameData>, event: AllEvents) -> CustomTrans<'a, 'b> {
         match event {
             AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,
                 target: entity,
             }) => {
-                if let Some(ui_transform_id) = data.world.read_storage::<UiTransform>().get(entity).map(|tr| tr.id.clone()) {
+                if let Some(ui_transform_id) = data
+                    .world
+                    .read_storage::<UiTransform>()
+                    .get(entity)
+                    .map(|tr| tr.id.clone())
+                {
                     match &*ui_transform_id {
                         "login_button" => {
-                            let username_entity = UiFinder::fetch(&data.world.res).find("username").unwrap();
-                            let username = data.world.read_storage::<UiText>().get(username_entity).unwrap().text.clone();
-                            let password_entity = UiFinder::fetch(&data.world.res).find("password").unwrap();
-                            let password = data.world.read_storage::<UiText>().get(password_entity).unwrap().text.clone();
-                            do_login(&mut data.world.write_resource::<Runtime>(), data.world.read_resource::<CallbackQueue>().send_handle(), username, password);
+                            let username_entity =
+                                UiFinder::fetch(&data.world.res).find("username").unwrap();
+                            let username = data
+                                .world
+                                .read_storage::<UiText>()
+                                .get(username_entity)
+                                .unwrap()
+                                .text
+                                .clone();
+                            let password_entity =
+                                UiFinder::fetch(&data.world.res).find("password").unwrap();
+                            let password = data
+                                .world
+                                .read_storage::<UiText>()
+                                .get(password_entity)
+                                .unwrap()
+                                .text
+                                .clone();
+                            do_login(
+                                &mut data.world.write_resource::<Runtime>(),
+                                data.world.read_resource::<CallbackQueue>().send_handle(),
+                                username,
+                                password,
+                            );
                             Trans::None
-                        },
+                        }
                         "guest_button" => Trans::Switch(Box::new(MainMenuState::default())),
                         "quit_button" => Trans::Quit,
                         _ => Trans::None,

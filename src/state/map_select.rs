@@ -1,23 +1,22 @@
-
-use amethyst_extra::{AssetLoader, set_discord_state};
-use resource::{MapInfoCache, CurrentMap};
 use add_removal_to_entity;
-use amethyst::prelude::*;
-use amethyst::utils::removal::*;
 use amethyst::input::*;
-use amethyst::ui::*;
-use state::*;
+use amethyst::prelude::*;
 use amethyst::renderer::VirtualKeyCode;
+use amethyst::ui::*;
+use amethyst::utils::removal::*;
+use amethyst_extra::{set_discord_state, AssetLoader};
 use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
+use resource::{CurrentMap, MapInfoCache};
+use state::*;
 
 #[derive(Default)]
 pub struct MapSelectState;
 
 impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
-        let ui_root = data.world.exec(|mut creator: UiCreator| {
-            creator.create("base/prefabs/map_select_ui.ron", ())
-        });
+        let ui_root = data
+            .world
+            .exec(|mut creator: UiCreator| creator.create("base/prefabs/map_select_ui.ron", ()));
         add_removal_to_entity(ui_root, RemovalId::MapSelectUi, &data.world);
 
         let font = data
@@ -30,7 +29,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
                 &mut data.world.write_resource(),
                 &mut data.world.write_resource(),
                 &data.world.read_resource(),
-            ).expect("Failed to load font");
+            )
+            .expect("Failed to load font");
         let maps = data.world.read_resource::<MapInfoCache>().maps.clone();
         for (accum, (internal, info)) in maps.into_iter().enumerate() {
             info!("adding map!");
@@ -55,11 +55,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
         Trans::None
     }
 
-    fn handle_event(
-        &mut self,
-        data: StateData<GameData>,
-        event: AllEvents,
-    ) -> CustomTrans<'a, 'b> {
+    fn handle_event(&mut self, data: StateData<GameData>, event: AllEvents) -> CustomTrans<'a, 'b> {
         let mut change_map = None;
         match event {
             AllEvents::Ui(UiEvent {

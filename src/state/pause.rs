@@ -1,11 +1,10 @@
-
 use add_removal_to_entity;
-use amethyst::prelude::*;
-use amethyst::utils::removal::*;
 use amethyst::input::*;
-use amethyst::ui::*;
-use amethyst::shrev::EventChannel;
+use amethyst::prelude::*;
 use amethyst::renderer::VirtualKeyCode;
+use amethyst::shrev::EventChannel;
+use amethyst::ui::*;
+use amethyst::utils::removal::*;
 use hoppinworldruntime::{AllEvents, CustomStateEvent, CustomTrans, RemovalId};
 
 #[derive(Default)]
@@ -24,11 +23,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for PauseMenuState {
         Trans::None
     }
 
-    fn handle_event(
-        &mut self,
-        data: StateData<GameData>,
-        event: AllEvents,
-    ) -> CustomTrans<'a, 'b> {
+    fn handle_event(&mut self, data: StateData<GameData>, event: AllEvents) -> CustomTrans<'a, 'b> {
         match event {
             AllEvents::Ui(UiEvent {
                 event_type: UiEventType::Click,

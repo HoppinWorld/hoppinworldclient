@@ -1,12 +1,12 @@
+use amethyst::core::nalgebra::Vector3;
+pub use amethyst::ecs::{Join, Read, ReadStorage, System, WriteStorage};
+use amethyst::ui::{UiText, UiTransform};
 use amethyst_extra::nphysics_ecs::DynamicBody;
-use RelativeTimer;
-use hoppinworlddata::PlayerStats;
 use amethyst_extra::Jump;
-use amethyst::ui::{UiTransform, UiText};
-use amethyst::core::nalgebra::{Vector3};
-use hoppinworldruntime::{PlayerTag,RuntimeProgress};
+use hoppinworlddata::PlayerStats;
+use hoppinworldruntime::{PlayerTag, RuntimeProgress};
 use sec_to_display;
-pub use amethyst::ecs::{System, Read,ReadStorage, WriteStorage, Join};
+use RelativeTimer;
 
 const DISPLAY_SPEED_MULTIPLIER: f32 = 50.0;
 
@@ -25,7 +25,10 @@ impl<'a> System<'a> for UiUpdaterSystem {
         Read<'a, RuntimeProgress>,
     );
 
-fn run(&mut self, (timer, _stat, rigid_bodies, _jumps, ui_transforms, mut texts, players, runtime_progress): Self::SystemData){
+    fn run(
+        &mut self,
+        (timer, _stat, rigid_bodies, _jumps, ui_transforms, mut texts, players, runtime_progress): Self::SystemData,
+    ) {
         for (ui_transform, mut text) in (&ui_transforms, &mut texts).join() {
             match &*ui_transform.id {
                 "timer" => {

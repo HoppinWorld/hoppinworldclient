@@ -1,12 +1,13 @@
-
-use amethyst_extra::nphysics_ecs::*;
-use RelativeTimer;
-use amethyst::core::{Transform, Time};
-use hoppinworldruntime::{ObjectType, RuntimeProgress, CustomStateEvent, PlayerTag};
-use amethyst_extra::BhopMovement3D;
-use amethyst::shrev::{ReaderId, EventChannel};
-use amethyst::ecs::{Resources, Entity, System, Entities, ReadStorage, WriteStorage, Read, Write, Join, SystemData};
 use amethyst::core::nalgebra::{Point3, Vector2, Vector3};
+use amethyst::core::{Time, Transform};
+use amethyst::ecs::{
+    Entities, Entity, Join, Read, ReadStorage, Resources, System, SystemData, Write, WriteStorage,
+};
+use amethyst::shrev::{EventChannel, ReaderId};
+use amethyst_extra::nphysics_ecs::*;
+use amethyst_extra::BhopMovement3D;
+use hoppinworldruntime::{CustomStateEvent, ObjectType, PlayerTag, RuntimeProgress};
+use RelativeTimer;
 
 /// Very game dependent.
 /// Don't try to make that generic.
@@ -46,7 +47,7 @@ impl<'a> System<'a> for ContactSystem {
             mut rigid_bodies,
             mut state_eventchannel,
             mut runtime_progress,
-            contacts2
+            contacts2,
         ): Self::SystemData,
     ) {
         // Contact events
@@ -56,8 +57,7 @@ impl<'a> System<'a> for ContactSystem {
 
         // Proximity events
         for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
-
-            info!("Collision: {:?}",contact);
+            info!("Collision: {:?}", contact);
             let type1 = object_types.get(contact.0);
             let type2 = object_types.get(contact.1);
 
@@ -95,11 +95,8 @@ impl<'a> System<'a> for ContactSystem {
                                 let cur_vel_flat_mag = cur_vel_flat.magnitude();
                                 if cur_vel_flat_mag >= max_vel {
                                     cur_vel_flat = cur_vel_flat.normalize() * max_vel;
-                                    rb.velocity.linear = Vector3::new(
-                                        cur_vel_flat.x,
-                                        cur_vel3.y,
-                                        cur_vel_flat.y,
-                                    );
+                                    rb.velocity.linear =
+                                        Vector3::new(cur_vel_flat.x, cur_vel3.y, cur_vel_flat.y);
                                 }
                             }
                         }
@@ -111,7 +108,7 @@ impl<'a> System<'a> for ContactSystem {
                     timer.stop();
                     info!("Finished! time: {:?}", timer.duration());
                     let id = runtime_progress.segment_count as usize;
-                    runtime_progress.segment_times[id-1] = timer.duration();
+                    runtime_progress.segment_times[id - 1] = timer.duration();
                     state_eventchannel.single_write(CustomStateEvent::MapFinished);
                 }
                 ObjectType::KillZone => {
@@ -119,18 +116,30 @@ impl<'a> System<'a> for ContactSystem {
                     let seg = runtime_progress.current_segment;
                     let pos = if seg == 1 {
                         // To start zone
-                        (&transforms, &object_types).join().filter(|(_,obj)| **obj == ObjectType::StartZone).map(|(tr,_)| tr.translation()).next().unwrap().clone()
+                        (&transforms, &object_types)
+                            .join()
+                            .filter(|(_, obj)| **obj == ObjectType::StartZone)
+                            .map(|(tr, _)| tr.translation())
+                            .next()
+                            .unwrap()
+                            .clone()
                     } else {
                         // To last checkpoint
 
                         // Find checkpoint corresponding to the current segment in progress
-                        (&transforms, &object_types).join().filter(|(_,obj)| {
-                        	if let ObjectType::SegmentZone(s) = **obj {
-                        		s == seg - 1
-                        	} else {
-                        		false
-                        	}
-                        }).map(|(tr,_)| tr.translation()).next().unwrap().clone()
+                        (&transforms, &object_types)
+                            .join()
+                            .filter(|(_, obj)| {
+                                if let ObjectType::SegmentZone(s) = **obj {
+                                    s == seg - 1
+                                } else {
+                                    false
+                                }
+                            })
+                            .map(|(tr, _)| tr.translation())
+                            .next()
+                            .unwrap()
+                            .clone()
                     };
 
                     // Move the player
@@ -140,7 +149,7 @@ impl<'a> System<'a> for ContactSystem {
                 }
                 ObjectType::SegmentZone(id) => {
                     if *id >= runtime_progress.current_segment {
-                        runtime_progress.segment_times[(*id-1) as usize] = timer.duration();
+                        runtime_progress.segment_times[(*id - 1) as usize] = timer.duration();
                         runtime_progress.current_segment = *id + 1;
                     }
                     info!("segment done");

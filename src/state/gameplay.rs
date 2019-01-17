@@ -1,12 +1,11 @@
-
 use amethyst::controls::HideCursor;
 use amethyst::core::Time;
-use amethyst::prelude::*;
-use amethyst::utils::removal::*;
 use amethyst::input::*;
+use amethyst::prelude::*;
 use amethyst::renderer::VirtualKeyCode;
-use state::*;
+use amethyst::utils::removal::*;
 use hoppinworldruntime::{AllEvents, CustomStateEvent, CustomTrans, RemovalId};
+use state::*;
 
 #[derive(Default)]
 pub struct GameplayState;
@@ -21,7 +20,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for GameplayState {
         //info!("FPS: {}", data.world.read_resource::<FPSCounter>().sampled_fps());
         //info!("Delta: {}", data.world.read_resource::<Time>().delta_seconds());
         //(&data.world.read_storage::<Transform>(), &data.world.read_storage::<ObjectType>()).join().filter(|t| *t.1 == ObjectType::Player).for_each(|t| info!("{:?}", t));
-        
+
         data.data.update(&data.world);
         Trans::None
     }
@@ -45,7 +44,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for GameplayState {
             }
             AllEvents::Custom(CustomStateEvent::MapFinished) => {
                 Trans::Switch(Box::new(ResultState::default()))
-            },
+            }
             AllEvents::Custom(CustomStateEvent::Retry) => {
                 Trans::Switch(Box::new(MapLoadState::default()))
             }
@@ -77,7 +76,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for GameplayState {
             &data.world.read_storage(),
             RemovalId::GameplayUi,
         );
-        
+
         // TODO for retry, can remove?
         data.world.maintain();
     }

@@ -15,65 +15,57 @@ extern crate winit;
 extern crate derive_new;
 #[macro_use]
 extern crate specs_derive;
-extern crate ron;
-extern crate uuid;
+extern crate amethyst_editor_sync;
+extern crate crossbeam_channel;
 extern crate hoppinworlddata;
 extern crate hoppinworldruntime;
-extern crate amethyst_editor_sync;
 extern crate hyper;
 extern crate hyper_tls;
+extern crate num_traits;
+extern crate ron;
 extern crate tokio;
 extern crate tokio_executor;
-extern crate crossbeam_channel;
-extern crate num_traits;
-
+extern crate uuid;
 
 /*#[macro_use]
 extern crate derive_builder;*/
 
-use amethyst::controls::*;
-use amethyst::core::nalgebra::Point3;
-use crossbeam_channel::Sender;
-use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
-use amethyst_extra::nphysics_ecs::*;
-use amethyst::utils::application_root_dir;
-use hoppinworldruntime::*;
-use std::sync::{Arc, Mutex};
-use amethyst_editor_sync::*;
-use amethyst::utils::removal::Removal;
-use std::collections::VecDeque;
 use amethyst::assets::Prefab;
-use amethyst::assets::{
-    PrefabLoaderSystem
-};
-use amethyst::controls::{
-    CursorHideSystem, MouseFocusUpdateSystem
-};
+use amethyst::assets::PrefabLoaderSystem;
+use amethyst::controls::*;
+use amethyst::controls::{CursorHideSystem, MouseFocusUpdateSystem};
+use amethyst::core::nalgebra::Point3;
 use amethyst::core::transform::TransformBundle;
-use amethyst::core::{Time, Transform, Named};
+use amethyst::core::{Named, Time, Transform};
 use amethyst::ecs::{
-    Entities, Entity, Join, Read, ReadStorage, Resources,
-    System, SystemData, Write, WriteStorage,
+    Entities, Entity, Join, Read, ReadStorage, Resources, System, SystemData, Write, WriteStorage,
 };
 use amethyst::input::InputBundle;
 use amethyst::prelude::*;
-use amethyst::renderer::{MeshData, ALPHA, ColorMask,
-    DepthMode, RenderBundle, DrawPbmSeparate, Pipeline, DisplayConfig, Stage, AmbientColor, Camera, Light};
+use amethyst::renderer::{
+    AmbientColor, Camera, ColorMask, DepthMode, DisplayConfig, DrawPbmSeparate, Light, MeshData,
+    Pipeline, RenderBundle, Stage, ALPHA,
+};
 use amethyst::shrev::{EventChannel, ReaderId};
 use amethyst::ui::*;
+use amethyst::utils::application_root_dir;
+use amethyst::utils::removal::Removal;
+use amethyst_editor_sync::*;
+use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
+use amethyst_extra::nphysics_ecs::*;
 use amethyst_gltf::*;
+use crossbeam_channel::Sender;
+use hoppinworldruntime::*;
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 
-
+use amethyst::core::nalgebra::Vector3;
 use amethyst::utils::fps_counter::FPSCounterBundle;
-use amethyst::core::nalgebra::{
-    Vector3,
-};
 use amethyst_extra::*;
 use hyper::{Body, Client, Request};
 use hyper_tls::HttpsConnector;
 use tokio::prelude::{Future, Stream};
 use tokio::runtime::Runtime;
-
 
 pub mod component;
 pub mod resource;
@@ -86,7 +78,6 @@ use self::resource::*;
 use self::state::*;
 use self::system::*;
 use self::util::*;
-
 
 #[derive(Serialize, Deserialize, Debug, Clone, new)]
 pub struct Gravity {
@@ -137,14 +128,7 @@ impl<'a> System<'a> for ColliderGroundedSystem {
 
     fn run(
         &mut self,
-        (
-            entities,
-            contacts,
-            time,
-            object_types,
-            players,
-            mut groundeds,
-        ): Self::SystemData,
+        (entities, contacts, time, object_types, players, mut groundeds): Self::SystemData,
     ) {
         let mut ground = false;
         for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
@@ -191,18 +175,29 @@ pub fn avg_float_to_string(value: f32, decimals: u32) -> String {
 }
 
 pub fn add_removal_to_entity(entity: Entity, id: RemovalId, world: &World) {
-	world
+    world
         .write_storage::<Removal<RemovalId>>()
         .insert(entity, Removal::new(id))
-        .expect(&format!("Failed to insert removalid to entity {:?}.", entity));
+        .expect(&format!(
+            "Failed to insert removalid to entity {:?}.",
+            entity
+        ));
 }
 
-pub fn do_login(future_runtime: &mut Runtime, queue: Sender<Callback>, username: String, password: String) {
+pub fn do_login(
+    future_runtime: &mut Runtime,
+    queue: Sender<Callback>,
+    username: String,
+    password: String,
+) {
     let https = HttpsConnector::new(2).expect("TLS initialization failed");
     let client = Client::builder().build::<_, hyper::Body>(https);
     let request = Request::post("https://hoppinworld.net:27015/login")
         .header("Content-Type", "application/json")
-        .body(Body::from(format!("{{\"email\":\"{}\", \"password\":\"{}\"}}", username, password)))
+        .body(Body::from(format!(
+            "{{\"email\":\"{}\", \"password\":\"{}\"}}",
+            username, password
+        )))
         .unwrap();
 
     let future = client
@@ -218,11 +213,13 @@ pub fn do_login(future_runtime: &mut Runtime, queue: Sender<Callback>, username:
             // each chunk of the body...
             result.into_body().for_each(move |chunk| {
                 /*io::stdout().write_all(&chunk)
-                    .map_err(|e| panic!("example expects stdout is open, error={}", e))*/
+                .map_err(|e| panic!("example expects stdout is open, error={}", e))*/
                 match serde_json::from_slice::<Auth>(&chunk) {
-                    Ok(a) => queue.send(Box::new(move |world| {
-                        world.add_resource(a.clone());
-                    })).expect("Failed to push auth callback to future queue"),
+                    Ok(a) => queue
+                        .send(Box::new(move |world| {
+                            world.add_resource(a.clone());
+                        }))
+                        .expect("Failed to push auth callback to future queue"),
                     Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
                 }
                 Ok(())
@@ -263,7 +260,11 @@ pub struct ScoreInsertRequest {
     pub average_speed: f32,
 }
 
-pub fn submit_score(future_runtime: &mut Runtime, auth_token: String, score_insert_request: ScoreInsertRequest) {
+pub fn submit_score(
+    future_runtime: &mut Runtime,
+    auth_token: String,
+    score_insert_request: ScoreInsertRequest,
+) {
     let https = HttpsConnector::new(4).expect("TLS initialization failed");
     let client = Client::builder().build::<_, hyper::Body>(https);
     let request = Request::post("https://hoppinworld.net:27015/submitscore")
@@ -287,7 +288,11 @@ pub fn submit_score(future_runtime: &mut Runtime, auth_token: String, score_inse
                     })),
                     Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
                 }*/
-                info!("{}", String::from_utf8(chunk.to_vec()).unwrap_or("~~Failure to convert server answer to string~~".to_string()));
+                info!(
+                    "{}",
+                    String::from_utf8(chunk.to_vec())
+                        .unwrap_or("~~Failure to convert server answer to string~~".to_string())
+                );
                 Ok(())
             })
         })
@@ -301,9 +306,8 @@ pub fn submit_score(future_runtime: &mut Runtime, auth_token: String, score_inse
     future_runtime.spawn(future);
 }
 
-
 pub fn verts_from_mesh_data(mesh_data: &MeshData, scale: &Vector3<f32>) -> Vec<Point3<f32>> {
-	if let MeshData::Creator(combo) = mesh_data {
+    if let MeshData::Creator(combo) = mesh_data {
         combo
             .vertices()
             .iter()
@@ -313,18 +317,24 @@ pub fn verts_from_mesh_data(mesh_data: &MeshData, scale: &Vector3<f32>) -> Vec<P
                     (sep.0)[1] * scale.y,
                     (sep.0)[2] * scale.z,
                 )
-            }).collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
     } else {
-    	error!("MeshData was not of combo type! Not extracting vertices.");
+        error!("MeshData was not of combo type! Not extracting vertices.");
         vec![]
     }
 }
 
-
-fn init_discord_rich_presence() -> Result<DiscordRichPresence,()> {
-    DiscordRichPresence::new(498979571933380609, "Main Menu".to_string(), Some("large_image".to_string()), Some("Hoppin World".to_string()), None, None)
+fn init_discord_rich_presence() -> Result<DiscordRichPresence, ()> {
+    DiscordRichPresence::new(
+        498979571933380609,
+        "Main Menu".to_string(),
+        Some("large_image".to_string()),
+        Some("Hoppin World".to_string()),
+        None,
+        None,
+    )
 }
-
 
 fn main() -> amethyst::Result<()> {
     /*
@@ -338,19 +348,19 @@ fn main() -> amethyst::Result<()> {
 
     hidden doors
     levers activating hidden doors later in the level
-    
+
 
 
     */
-	
-	amethyst::start_logger(Default::default());
+
+    amethyst::start_logger(Default::default());
 
     /*amethyst::start_logger(amethyst::LoggerConfig {
-		stdout: amethyst::StdoutLog::Colored,
-		level_filter: amethyst::LogLevelFilter::Error,
-		log_file: None,
-		allow_env_override: false,
-	});*/
+        stdout: amethyst::StdoutLog::Colored,
+        level_filter: amethyst::LogLevelFilter::Error,
+        log_file: None,
+        allow_env_override: false,
+    });*/
 
     let mut resources_directory = application_root_dir().expect("Failed to get app_root_dir.");
     resources_directory.push("assets");
@@ -361,8 +371,6 @@ fn main() -> amethyst::Result<()> {
     let display_config = DisplayConfig::load(&display_config_path);
 
     let key_bindings_path = asset_loader.resolve_path("config/input.ron").unwrap();
-
-
 
     // Idea: Show states on StateMachine stack
     // Idea: Time controls (time scale, change manually, etc) core::Time
@@ -396,20 +404,18 @@ fn main() -> amethyst::Result<()> {
         Stage::with_backbuffer()
             .clear_target([0.1, 0.1, 0.1, 1.0], 1.0)
             .with_pass(
-                DrawPbmSeparate::new()
-                    .with_transparency(
+                DrawPbmSeparate::new().with_transparency(
                     ColorMask::all(),
                     ALPHA,
                     Some(DepthMode::LessEqualWrite),
-                )
-                /*DrawFlatSeparate::new()
-                .with_transparency(
-                    ColorMask::all(),
-                    ALPHA,
-                    Some(DepthMode::LessEqualWrite)
-                )*/
-
-            ).with_pass(DrawUi::new()),
+                ), /*DrawFlatSeparate::new()
+                   .with_transparency(
+                       ColorMask::all(),
+                       ALPHA,
+                       Some(DepthMode::LessEqualWrite)
+                   )*/
+            )
+            .with_pass(DrawUi::new()),
     );
 
     let noclip = NoClip::new(String::from("noclip"));
@@ -468,11 +474,14 @@ fn main() -> amethyst::Result<()> {
         //.with_bundle(editor_bundle)?
         ;
 
-    let mut game_builder = CoreApplication::<_, AllEvents, AllEventsReader>::build(resources_directory, InitState::default())?
-        .with_resource(asset_loader)
-        .with_resource(AssetLoaderInternal::<FontAsset>::new())
-        .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new())
-        .with_resource(noclip);
+    let mut game_builder = CoreApplication::<_, AllEvents, AllEventsReader>::build(
+        resources_directory,
+        InitState::default(),
+    )?
+    .with_resource(asset_loader)
+    .with_resource(AssetLoaderInternal::<FontAsset>::new())
+    .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new())
+    .with_resource(noclip);
     if let Ok(discord) = init_discord_rich_presence() {
         game_builder = game_builder.with_resource(discord);
     }
