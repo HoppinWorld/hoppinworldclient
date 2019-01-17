@@ -64,18 +64,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             &data.world.read_resource(),
         );
 
-        /*let scene_handle = data.world.exec(|loader: PrefabLoader<GltfPrefab>| {
-            loader.load(
-                gltf_path_from_map(&get_working_dir(), &name),
-                GltfSceneFormat,
-                GltfSceneOptions{
-                    flip_v_coord: true,
-                    ..Default::default()
-                },
-                &mut pg,
-            )
-        });*/
-
         if let None = scene_handle {
             error!("Failed to load map!");
             return;
@@ -90,12 +78,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .with(scene_handle.unwrap())
             .with(Removal::new(RemovalId::Scene))
             .build();
-
-        data.world.add_resource(Gravity::new(Vector3::new(
-            0.0,
-            player_settings.gravity,
-            0.0,
-        )));
 
         let mut jump = Jump::new(true, true, player_settings.jump_velocity, true);
         jump.jump_timing_boost = Some(

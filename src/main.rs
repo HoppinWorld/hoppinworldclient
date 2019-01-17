@@ -79,111 +79,6 @@ use self::state::*;
 use self::system::*;
 use self::util::*;
 
-#[derive(Serialize, Deserialize, Debug, Clone, new)]
-pub struct Gravity {
-    pub acceleration: Vector3<f32>,
-}
-
-impl Default for Gravity {
-    fn default() -> Self {
-        Gravity {
-            acceleration: Vector3::new(0.0, -1.0, 0.0),
-        }
-    }
-}
-
-/*pub struct GravitySystem;
-
-impl<'a> System<'a> for GravitySystem {
-    type SystemData = (
-        Read<'a, Time>,
-        Read<'a, Gravity>,
-        WriteStorage<'a, DynamicBody>,
-    );
-    fn run(&mut self, (time, gravity, mut rigid_bodies): Self::SystemData) {
-        for (mut rb,) in (&mut rigid_bodies,).join() {
-            // Add the acceleration to the velocity.
-            if let DynamicBody::RigidBody(ref mut rb) = &mut rb {
-                let new_vel = rb.velocity.linear + gravity.acceleration * time.delta_seconds();
-                rb.velocity.linear = new_vel;
-            }
-        }
-    }
-}*/
-
-#[derive(Default)]
-pub struct ColliderGroundedSystem {
-    contact_reader: Option<ReaderId<EntityProximityEvent>>,
-}
-
-impl<'a> System<'a> for ColliderGroundedSystem {
-    type SystemData = (
-        Entities<'a>,
-        Read<'a, EventChannel<EntityProximityEvent>>,
-        Read<'a, Time>,
-        ReadStorage<'a, ObjectType>,
-        ReadStorage<'a, PlayerTag>,
-        WriteStorage<'a, Grounded>,
-    );
-
-    fn run(
-        &mut self,
-        (entities, contacts, time, object_types, players, mut groundeds): Self::SystemData,
-    ) {
-        let mut ground = false;
-        for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
-            //info!("Collision: {:?}",contact);
-            let type1 = object_types.get(contact.0);
-            let type2 = object_types.get(contact.1);
-
-            if type1.is_none() || type2.is_none() {
-                continue;
-            }
-            let type1 = type1.unwrap();
-            let type2 = type2.unwrap();
-
-            //info!("CONTACT WITH {:?} & {:?}", type1, type2);
-            if *type1 == ObjectType::PlayerFeet || *type2 == ObjectType::PlayerFeet {
-                // The player feets touched the ground.
-                // That means we are grounded.
-                ground = true;
-                //info!("GROUNDED");
-            }
-        }
-
-        if let Some(ground_comp) = (&players, &mut groundeds).join().next().map(|t| t.1) {
-            if ground && !ground_comp.ground {
-                // Just grounded
-                ground_comp.since = time.absolute_time_seconds();
-            }
-            ground_comp.ground = ground;
-        }
-    }
-
-    fn setup(&mut self, res: &mut Resources) {
-        Self::SystemData::setup(res);
-        self.contact_reader = Some(
-            res.fetch_mut::<EventChannel<EntityProximityEvent>>()
-                .register_reader(),
-        );
-    }
-}
-
-pub fn avg_float_to_string(value: f32, decimals: u32) -> String {
-    let mult = 10.0_f32.powf(decimals as f32);
-    ((value * mult).ceil() / mult).to_string()
-}
-
-pub fn add_removal_to_entity(entity: Entity, id: RemovalId, world: &World) {
-    world
-        .write_storage::<Removal<RemovalId>>()
-        .insert(entity, Removal::new(id))
-        .expect(&format!(
-            "Failed to insert removalid to entity {:?}.",
-            entity
-        ));
-}
-
 pub fn do_login(
     future_runtime: &mut Runtime,
     queue: Sender<Callback>,
@@ -201,50 +96,30 @@ pub fn do_login(
         .unwrap();
 
     let future = client
-        // Fetch the url...
         .request(request)
-        // And then, if we get a response back...
         .and_then(move |result| {
             println!("Response: {}", result.status());
             println!("Headers: {:#?}", result.headers());
-
-            // The body is a stream, and for_each returns a new Future
-            // when the stream is finished, and calls the closure on
-            // each chunk of the body...
             result.into_body().for_each(move |chunk| {
-                /*io::stdout().write_all(&chunk)
-                .map_err(|e| panic!("example expects stdout is open, error={}", e))*/
                 match serde_json::from_slice::<Auth>(&chunk) {
                     Ok(a) => queue
                         .send(Box::new(move |world| {
                             world.add_resource(a.clone());
                         }))
                         .expect("Failed to push auth callback to future queue"),
-                    Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
+                    Err(e) => error!("Failed to parse received data to Auth: {}", e),
                 }
                 Ok(())
             })
-            //serde_json::from_slice::<Auth>(result.into_body())
         })
-        // If all good, just tell the user...
         .map(move |_| {
-            println!("\n\nDone.");
-            /*queue_ref.lock().unwrap().push_back(Box::new(move |world| {
-                world.add_resource(auth);
-            }));*/
+            info!("\n\nLogin successful.");
         })
-        // If there was an error, let the user know...
+        // TODO: Show error
         .map_err(|err| {
-            eprintln!("Error {}", err);
+            error!("Failed to login. Error: {}", err);
         });
-    //tokio::run(future);
-    /*while let Ok(Async::NotReady) = future.poll() {
-        println!("POLLING");
-    }*/
-    //println!("Done");
     future_runtime.spawn(future);
-
-    //runtime.shutdown_on_idle().wait().unwrap();
 }
 
 // TODO remove dup from backend
@@ -274,56 +149,29 @@ pub fn submit_score(
         .unwrap();
 
     let future = client
-        // Fetch the url...
         .request(request)
-        // And then, if we get a response back...
         .and_then(move |result| {
             println!("Response: {}", result.status());
             println!("Headers: {:#?}", result.headers());
 
             result.into_body().for_each(move |chunk| {
-                /*match serde_json::from_slice::<Auth>(&chunk) {
-                    Ok(a) => queue_ref.lock().unwrap().push_back(Box::new(move |world| {
-                        world.add_resource(a.clone());
-                    })),
-                    Err(e) => eprintln!("Failed to parse received data to Auth: {}", e),
-                }*/
                 info!(
                     "{}",
                     String::from_utf8(chunk.to_vec())
-                        .unwrap_or("~~Failure to convert server answer to string~~".to_string())
+                        .unwrap_or("Error converting server answer to string after score submission".to_string())
                 );
                 Ok(())
             })
         })
-        // If all good, just tell the user...
         .map(move |_| {
-            println!("\n\nDone submitting score.");
+            info!("\n\nScore submitted with success.0");
         })
         .map_err(|err| {
-            eprintln!("Error {}", err);
+            error!("Error {}", err);
         });
     future_runtime.spawn(future);
 }
 
-pub fn verts_from_mesh_data(mesh_data: &MeshData, scale: &Vector3<f32>) -> Vec<Point3<f32>> {
-    if let MeshData::Creator(combo) = mesh_data {
-        combo
-            .vertices()
-            .iter()
-            .map(|sep| {
-                Point3::new(
-                    (sep.0)[0] * scale.x,
-                    (sep.0)[1] * scale.y,
-                    (sep.0)[2] * scale.z,
-                )
-            })
-            .collect::<Vec<_>>()
-    } else {
-        error!("MeshData was not of combo type! Not extracting vertices.");
-        vec![]
-    }
-}
 
 fn init_discord_rich_presence() -> Result<DiscordRichPresence, ()> {
     DiscordRichPresence::new(
@@ -353,14 +201,16 @@ fn main() -> amethyst::Result<()> {
 
     */
 
-    amethyst::start_logger(Default::default());
-
-    /*amethyst::start_logger(amethyst::LoggerConfig {
-        stdout: amethyst::StdoutLog::Colored,
-        level_filter: amethyst::LogLevelFilter::Error,
-        log_file: None,
-        allow_env_override: false,
-    });*/
+    if cfg!(debug_assertions) {
+        amethyst::start_logger(Default::default());
+    } else {
+        amethyst::start_logger(amethyst::LoggerConfig {
+            stdout: amethyst::StdoutLog::Colored,
+            level_filter: amethyst::LogLevelFilter::Error,
+            log_file: None,// TODO some
+            allow_env_override: false,
+        });
+    }
 
     let mut resources_directory = application_root_dir().expect("Failed to get app_root_dir.");
     resources_directory.push("assets");
@@ -438,7 +288,7 @@ fn main() -> amethyst::Result<()> {
         ).with(MouseFocusUpdateSystem::new(), "mouse_focus", &[])
         .with(CursorHideSystem::new(), "cursor_hide", &[])
         .with(PlayerFeetSync, "feet_sync", &[])
-        //.with(ColliderGroundedSystem::default(), "ground_checker", &["feet_sync"]) // TODO: Runs one frame late
+        // runs one frame late?
         .with(GroundCheckerSystem::new(Vec::<ObjectType>::new()), "ground_checker", &["feet_sync"])
         // Important to have this after ground checker and before jump.
         .with(JumpSystem::default(), "jump", &["ground_checker"])
@@ -454,7 +304,6 @@ fn main() -> amethyst::Result<()> {
             "bhop_movement",
             &["free_rotation", "jump", "ground_friction", "ground_checker"],
         )
-        //.with(GravitySystem, "gravity", &[])
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
         .with_bundle(TransformBundle::new().with_dep(&["free_rotation", "feet_sync", "contacts"]))?
