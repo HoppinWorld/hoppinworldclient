@@ -1,0 +1,91 @@
+#![enable(implicit_some)]
+Container(
+    transform: (
+        id: "all",
+        anchor: Middle,
+        stretch: XY( x_margin: 0., y_margin: 0.),
+        width: 20.,
+        height: 20.,
+    ),
+    background: (
+        image: Data(Rgba(({{BG_COLOR}}), (channel: Srgb))),
+    ),
+    children: [
+        // Title
+        Text(
+            transform: (
+                id: "title",
+                y: -64.,
+                width: 800.,
+                height: 128.,
+                tab_order: -1,
+                anchor: TopMiddle,
+            ),
+            text: (
+                text: "Result",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 80.,
+                color: (0.149, 0.376, 0.643, 1.0),
+            )
+        ),
+
+        // Map name
+        Text(
+            transform: (
+                id: "map_name",
+                y: -170.,
+                width: 800.,
+                height: 92.,
+                tab_order: -1,
+                anchor: TopMiddle,
+            ),
+            text: (
+                text: "Map Name",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 40.,
+                color: (0.988, 0.537, 0.255, 1.0),
+            )
+        ),
+
+        // Timer
+        Text(
+            transform: (
+                id: "timer",
+                y: 180.,
+                width: 400.,
+                height: 75.,
+                tab_order: -1,
+                anchor: BottomMiddle,
+            ),
+            text: (
+                text: "Time",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 50.,
+                color: (0.988, 0.537, 0.255, 1.0),
+            )
+        ),
+
+        // Back Button
+        // Goes back to MapSelect
+        Button(
+            transform: (
+                id: "back_button",
+                y: 92.,
+                width: 256.,
+                height: 128.,
+                tab_order: 1,
+                anchor: BottomMiddle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Back",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: (0.251, 0.247, 0.298, 1.0),
+                normal_image: Data(Rgba((0.914, 0.843, 0.345, 1.0), (channel: Srgb))),
+                hover_image: Data(Rgba((0.795, 0.734, 0.304, 1.0), (channel: Srgb))),
+                press_image: Data(Rgba((0.710, 0.646, 0.191, 1.0), (channel: Srgb))),
+            )
+        ),
+    ]
+)

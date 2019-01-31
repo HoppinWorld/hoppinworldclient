@@ -1,0 +1,218 @@
+#![enable(implicit_some)]
+Container(
+    transform: (
+        id: "all",
+        anchor: Middle,
+        stretch: XY( x_margin: 0., y_margin: 0.),
+        width: 20.,
+        height: 20.,
+    ),
+    background: (
+        image: Data(Rgba(({{BG_COLOR}}), (channel: Srgb))),
+    ),
+    children: [
+        // Title
+        Text(
+            transform: (
+                id: "title",
+                x: 0.,
+                y: -90.,
+                width: 800.,
+                height: 150.,
+                tab_order: -1,
+                anchor: TopMiddle,
+            ),
+            text: (
+                text: "HoppinWorld",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 100.,
+                color: ({{BG2_COLOR}}),
+                align: Middle,
+            )
+        ),
+
+        // Username label
+        Text(
+            transform: (
+                id: "username_label",
+                y: 150.,
+                width: 1000.,
+                height: 75.,
+                tab_order: 1,
+                anchor: Middle,
+                stretch: XY(x_margin: 0., y_margin: 0.),
+            ),
+            text: (
+                text: "Username",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                color: ({{TEXT_LIGHT_COLOR}}),
+                align: Middle,
+            )
+        ),
+
+        // Username field
+        Container(
+            transform: (
+                id: "username_container",
+                y: 75.,
+                width: 1000.,
+                height: 75.,
+                tab_order: -1,
+                anchor: Middle,
+            ),
+            background: (
+                image: Data(Rgba(({{BG2_COLOR}}), (channel: Srgb))),
+            ),
+            children: [
+                Text(
+                    transform: (
+                        id: "username",
+                        width: 1000.,
+                        height: 75.,
+                        tab_order: 1,
+                        anchor: Middle,
+                        stretch: XY(x_margin: 0., y_margin: 0.),
+                    ),
+                    text: (
+                        text: "",
+                        font: File("base/font/arial.ttf", Ttf, ()),
+                        font_size: 45.,
+                        color: ({{TEXT_LIGHT_COLOR}}),
+                        align: Middle,
+                        editable: (
+                            max_length: 64,
+                        ),
+                    )
+                ),
+            ]
+        ),
+
+        Text(
+            transform: (
+                id: "password_label",
+                y: -75.,
+                width: 1000.,
+                height: 75.,
+                tab_order: 2,
+                anchor: Middle,
+                stretch: XY(x_margin: 0., y_margin: 0.),
+            ),
+            text: (
+                text: "Password",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                color: ({{TEXT_LIGHT_COLOR}}),
+                align: Middle,
+            )
+        ),
+
+        // Password field
+        Container(
+            transform: (
+                id: "password_container",
+                y: -150.,
+                width: 1000.,
+                height: 75.,
+                tab_order: -1,
+                anchor: Middle,
+            ),
+            background: (
+                image: Data(Rgba(({{BG2_COLOR}}), (channel: Srgb))),
+            ),
+            children: [
+                Text(
+                    transform: (
+                        id: "password",
+                        width: 1000.,
+                        height: 75.,
+                        tab_order: 2,
+                        anchor: Middle,
+                        stretch: XY(x_margin: 0., y_margin: 0.),
+                    ),
+                    text: (
+                        text: "",
+                        font: File("base/font/arial.ttf", Ttf, ()),
+                        font_size: 45.,
+                        color: ({{TEXT_LIGHT_COLOR}}),
+                        align: Middle,
+                        password: true,
+                        editable: (
+                            max_length: 64,
+                        ),
+                    )
+                ),
+            ]
+        ),
+
+        // Login Button
+        Button(
+            transform: (
+                id: "login_button",
+                x: -300.,
+                y: 160.,
+                width: 256.,
+                height: 128.,
+                tab_order: 3,
+                anchor: BottomMiddle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Login",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: ({{PRIMARY_ACTION_COLOR}}),
+                normal_image: Data(Rgba(({{PRIMARY_ACTION_COLOR}}), (channel: Srgb))),
+                hover_image: Data(Rgba(({{PRIMARY_ACTION_HOVER_COLOR}}), (channel: Srgb))),
+                press_image: Data(Rgba(({{PRIMARY_ACTION_PRESS_COLOR}}), (channel: Srgb))),
+                //hover_sound: File("audio/boop.ogg", Ogg, ()),
+                //press_sound: File("audio/confirm.ogg", Ogg, ()),
+            )
+        ),
+
+        // Play as guest button
+        Button(
+            transform: (
+                id: "guest_button",
+                y: 160.,
+                width: 256.,
+                height: 128.,
+                tab_order: 3,
+                anchor: BottomMiddle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Guest",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: ({{SECONDARY_ACTION_TEXT_COLOR}}),
+                normal_image: Data(Rgba(({{SECONDARY_ACTION_COLOR}}), (channel: Srgb))),
+                hover_image: Data(Rgba(({{SECONDARY_ACTION_HOVER_COLOR}}), (channel: Srgb))),
+                press_image: Data(Rgba(({{SECONDARY_ACTION_PRESS_COLOR}}), (channel: Srgb))),
+            )
+        ),
+
+        // Quit Button
+        Button(
+            transform: (
+                id: "quit_button",
+                x: 300.,
+                y: 160.,
+                width: 256.,
+                height: 128.,
+                tab_order: 4,
+                anchor: BottomMiddle,
+                mouse_reactive: true,
+            ),
+            button: (
+                text: "Quit",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 60.,
+                normal_text_color: ({{SECONDARY_ACTION_TEXT_COLOR}}),
+                normal_image: Data(Rgba(({{SECONDARY_ACTION_COLOR}}), (channel: Srgb))),
+                hover_image: Data(Rgba(({{SECONDARY_ACTION_HOVER_COLOR}}), (channel: Srgb))),
+                press_image: Data(Rgba(({{SECONDARY_ACTION_PRESS_COLOR}}), (channel: Srgb))),
+            )
+        ),
+    ]
+)

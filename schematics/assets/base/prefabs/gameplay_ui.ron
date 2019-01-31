@@ -1,0 +1,131 @@
+#![enable(implicit_some)]
+Container(
+    transform: (
+        id: "all",
+        anchor: Middle,
+        stretch: XY( x_margin: 0., y_margin: 0.),
+        width: 20.,
+        height: 20.,
+    ),
+    children: [
+        Container(
+            transform: (
+                id: "speed_bar",
+                y: 32.,
+                width: 256.,
+                height: 32.,
+                anchor: BottomMiddle,
+            ),
+            background: (
+                image: Data(Rgba(({{BG_COLOR}}), (channel: Srgb))),
+            ),
+            children: [
+                Image(
+                    transform: (
+                        id: "speed_cursor",
+                        width: 32.,
+                        height: 32.,
+                        anchor: Middle,
+                    ),
+                    image: (
+                        image: Data(Rgba((0.18, 0.05, 0.85, 1.0), (channel: Srgb))),
+                    )
+                ),
+            ]
+        ),
+
+        // Timer
+        Text(
+            transform: (
+                id: "timer",
+                y: -80.,
+                width: 500.,
+                height: 75.,
+                tab_order: -1,
+                anchor: TopMiddle,
+            ),
+            text: (
+                text: "Time",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 50.,
+                color: (0.988, 0.969, 1.0, 1.0),
+            )
+        ),
+
+        // Previous Best
+        Text(
+            transform: (
+                id: "pb",
+                x: 200.,
+                y: -80.,
+                width: 400.,
+                height: 60.,
+                tab_order: -1,
+                anchor: TopLeft,
+            ),
+            text: (
+                text: "PB",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 50.,
+                color: (0.988, 0.969, 1.0, 1.0),
+            )
+        ),
+
+        // World Record
+        Text(
+            transform: (
+                id: "wr",
+                x: -200.,
+                y: -80.,
+                width: 400.,
+                height: 60.,
+                tab_order: -1,
+                anchor: TopRight,
+            ),
+            text: (
+                text: "WR",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 50.,
+                color: (0.988, 0.969, 1.0, 1.0),
+            )
+        ),
+
+        // Segment
+        Text(
+            transform: (
+                id: "segment",
+                x: 80.,
+                y: 80.,
+                width: 64.,
+                height: 64.,
+                tab_order: -1,
+                anchor: BottomLeft,
+            ),
+            text: (
+                text: "1",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 75.,
+                color: (0.988, 0.969, 1.0, 1.0),
+            )
+        ),
+
+        // Speed
+        Text(
+            transform: (
+                id: "speed",
+                x: -144.,
+                y: 80.,
+                width: 256.,
+                height: 64.,
+                tab_order: -1,
+                anchor: BottomRight,
+            ),
+            text: (
+                text: "222",
+                font: File("base/font/arial.ttf", Ttf, ()),
+                font_size: 75.,
+                color: (0.988, 0.969, 1.0, 1.0),
+            )
+        ),
+    ]
+)
