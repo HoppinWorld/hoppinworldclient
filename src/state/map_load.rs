@@ -114,9 +114,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .into_iter()
             .map(|mut pt| {
                 pt.position = player_rotation * pt.position;
-                pt.position.x *= player_scale.x * 0.9;
+                pt.position.x *= player_scale.x * 0.95;
                 pt.position.y *= 0.1;
-                pt.position.z *= player_scale.z * 0.9;
+                pt.position.z *= player_scale.z * 0.95;
                 Point3::from(pt.position)
             })
             .collect::<Vec<_>>();
