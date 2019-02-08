@@ -88,16 +88,14 @@ impl<'a> System<'a> for ContactSystem {
                         (&*entities, &players, &bhop_movements, &mut rigid_bodies).join()
                     {
                         if entity == player_entity {
-                            if let DynamicBody::RigidBody(ref mut rb) = &mut rb {
-                                let max_vel = movement.max_velocity_ground;
-                                let cur_vel3 = rb.velocity.linear;
-                                let mut cur_vel_flat = Vector2::new(cur_vel3.x, cur_vel3.z);
-                                let cur_vel_flat_mag = cur_vel_flat.magnitude();
-                                if cur_vel_flat_mag >= max_vel {
-                                    cur_vel_flat = cur_vel_flat.normalize() * max_vel;
-                                    rb.velocity.linear =
-                                        Vector3::new(cur_vel_flat.x, cur_vel3.y, cur_vel_flat.y);
-                                }
+                            let max_vel = movement.max_velocity_ground;
+                            let cur_vel3 = rb.velocity.linear;
+                            let mut cur_vel_flat = Vector2::new(cur_vel3.x, cur_vel3.z);
+                            let cur_vel_flat_mag = cur_vel_flat.magnitude();
+                            if cur_vel_flat_mag >= max_vel {
+                                cur_vel_flat = cur_vel_flat.normalize() * max_vel;
+                                rb.velocity.linear =
+                                    Vector3::new(cur_vel_flat.x, cur_vel3.y, cur_vel_flat.y);
                             }
                         }
                     }

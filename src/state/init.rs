@@ -39,16 +39,18 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
                 player_settings_path
             ));
 
+        {
+            let mut physics_world = data.world.write_resource::<PhysicsWorld>();
+            physics_world.collision_world_mut().collision_matrix = generate_collision_matrix();
+        }
+
+        *data.world.write_resource::<Gravity>() = Gravity::new(0.0, player_settings.gravity, 0.0);
+
         data.world.add_resource(player_settings);
 
         //let mut runtime = Arc::new(Mutex::new(Runtime::new().expect("Failed to create tokio runtime")));
         let runtime = Runtime::new().expect("Failed to create tokio runtime");
         data.world.add_resource(runtime);
-
-        data.world
-            .write_resource::<PhysicsWorld>()
-            .collision_world_mut()
-            .collision_matrix = generate_collision_matrix();
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {

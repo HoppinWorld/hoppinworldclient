@@ -330,7 +330,8 @@ fn main() -> amethyst::Result<()> {
     .with_resource(asset_loader)
     .with_resource(AssetLoaderInternal::<FontAsset>::new())
     .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new())
-    .with_resource(noclip);
+    .with_resource(noclip)
+    .with_resource(TimeStep::Fixed(1./120.));
     if let Ok(discord) = init_discord_rich_presence() {
         game_builder = game_builder.with_resource(discord);
     }

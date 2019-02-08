@@ -41,13 +41,11 @@ impl<'a> System<'a> for UiUpdaterSystem {
                 }
                 "speed" => {
                     for (_, rb) in (&players, &rigid_bodies).join() {
-                        if let DynamicBody::RigidBody(ref rb) = &rb {
-                            let vel = rb.velocity.linear;
-                            let vel_flat = Vector3::new(vel.x, 0.0, vel.z);
-                            let mag = vel_flat.magnitude() * DISPLAY_SPEED_MULTIPLIER;
+                        let vel = rb.velocity.linear;
+                        let vel_flat = Vector3::new(vel.x, 0.0, vel.z);
+                        let mag = vel_flat.magnitude() * DISPLAY_SPEED_MULTIPLIER;
 
-                            text.text = sec_to_display(mag.into(), 1);
-                        }
+                        text.text = sec_to_display(mag.into(), 1);
                     }
                 }
                 _ => {}
