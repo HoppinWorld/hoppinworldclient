@@ -63,7 +63,7 @@ Container(
                 stretch: XY(x_margin: 0., y_margin: 0.),
             ),
             text: (
-                text: "Username",
+                text: "Email Address",
                 font: File("base/font/arial.ttf", Ttf, ()),
                 font_size: 60.,
                 color: (0.251, 0.247, 0.298, 1.0),

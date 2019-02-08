@@ -3,6 +3,7 @@ use amethyst::prelude::*;
 use amethyst::ui::*;
 use amethyst::utils::removal::*;
 use amethyst_extra::set_discord_state;
+use amethyst::core::Time;
 use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
 use state::*;
 use tokio::runtime::Runtime;
@@ -13,6 +14,8 @@ pub struct LoginState;
 
 impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
+        data.world.write_resource::<Time>().set_time_scale(0.0);
+
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/login_ui.ron", ()));

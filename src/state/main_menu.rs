@@ -2,6 +2,7 @@ use add_removal_to_entity;
 use amethyst::prelude::*;
 use amethyst::ui::*;
 use amethyst::utils::removal::*;
+use amethyst::core::Time;
 use amethyst_extra::set_discord_state;
 use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
 use state::*;
@@ -11,6 +12,8 @@ pub struct MainMenuState;
 
 impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MainMenuState {
     fn on_start(&mut self, mut data: StateData<GameData>) {
+        data.world.write_resource::<Time>().set_time_scale(0.0);
+
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/menu_ui.ron", ()));

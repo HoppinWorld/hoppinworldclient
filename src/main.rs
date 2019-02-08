@@ -307,7 +307,7 @@ fn main() -> amethyst::Result<()> {
         .with(UiUpdaterSystem, "gameplay_ui_updater", &[])
         .with(ContactSystem::default(), "contacts", &["bhop_movement"])
         .with_bundle(TransformBundle::new().with_dep(&["free_rotation", "feet_sync", "contacts"]))?
-        .with(NoClipToggleSystem::<String>::default(), "noclip_toggle", &[])
+        //.with(NoClipToggleSystem::<String>::default(), "noclip_toggle", &[])
         //.with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
         //.with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
         .with_bundle(
