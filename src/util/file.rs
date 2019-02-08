@@ -33,10 +33,8 @@ pub fn get_all_maps(base_path: &str) -> MapInfoCache {
 
 pub fn gltf_path_from_map(base_path: &str, map_name: &str) -> String {
     format!(
-        "{}{}maps{}{}.glb",
+        "{}/maps/{}.glb",
         base_path,
-        std::path::MAIN_SEPARATOR,
-        std::path::MAIN_SEPARATOR,
         map_name
     )
 }
