@@ -64,6 +64,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             &data.world.read_resource(),
         );
 
+        error!("Loading map from {}", &gltf_path_from_map("../..", &name));
+
         if let None = scene_handle {
             error!("Failed to load map!");
             return;
