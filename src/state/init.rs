@@ -28,8 +28,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
 
         let mut player_settings_path = application_root_dir().unwrap();
         player_settings_path.push("assets/base/config/player.ron");
-        let player_settings_path = player_settings_path.to_str().unwrap();
-        let player_settings_data = std::fs::read_to_string(player_settings_path).expect(&format!(
+        let player_settings_path = String::from(player_settings_path.to_str().unwrap()).replace("\\", "/");
+        let player_settings_data = std::fs::read_to_string(&player_settings_path).expect(&format!(
             "Failed to load player settings from file at {}",
             player_settings_path
         ));
