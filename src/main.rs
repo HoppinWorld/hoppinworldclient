@@ -56,6 +56,7 @@ use amethyst_extra::nphysics_ecs::*;
 use amethyst_gltf::*;
 use crossbeam_channel::Sender;
 use hoppinworldruntime::*;
+use amethyst_extra::dirty::Dirty;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
@@ -165,6 +166,50 @@ pub fn submit_score(
         })
         .map(move |_| {
             info!("\n\nScore submitted with success.0");
+        })
+        .map_err(|err| {
+            error!("Error {}", err);
+        });
+    future_runtime.spawn(future);
+}
+
+pub fn validate_auth_token(
+    future_runtime: &mut Runtime,
+    auth_token: String,
+    queue: Sender<Callback>,
+) {
+    let https = HttpsConnector::new(4).expect("TLS initialization failed");
+    let client = Client::builder().build::<_, hyper::Body>(https);
+    let request = Request::post("https://hoppinworld.net:27015/validatetoken")
+        .header("Content-Type", "application/json")
+        .header("X-Authorization", format!("Bearer {}", auth_token))
+        .body(Body::from(auth_token))
+        .unwrap();
+
+    let future = client
+        .request(request)
+        .and_then(move |result| {
+            println!("Response: {}", result.status());
+            println!("Headers: {:#?}", result.headers());
+
+            result.into_body().for_each(move |chunk| {
+                let valid = match serde_json::from_slice::<bool>(&chunk) {
+                    Ok(a) => true,
+                    Err(e) => {
+                        error!("Failed to parse received data to validation bool: {}", e);
+                        false
+                    }
+                };
+                queue
+                    .send(Box::new(move |world| {
+                        world.write_resource::<Dirty<Auth>>().write().set_validated(valid);
+                    }))
+                    .expect("Failed to push auth validation callback to future queue");
+                Ok(())
+            })
+        })
+        .map(move |_| {
+            info!("\n\nAuth token validation request submitted with success to server.");
         })
         .map_err(|err| {
             error!("Error {}", err);
@@ -313,7 +358,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?.with_bundle(UiBundle::<String, String>::new())?
-        .with_barrier()
+        .with(AutoSaveSystem::<Auth>::new(resources_directory.to_str().unwrap().to_owned() + "../auth_token.ron"), "auth_token_save", &[])        .with_barrier()
         .with_bundle(PhysicsBundle::new())?
         //.with(ForceUprightSystem::default(), "force_upright", &["sync_bodies_from_physics_system"])
         .with_bundle(RenderBundle::new(pipe, Some(display_config))

@@ -3,11 +3,12 @@ use amethyst::prelude::*;
 use amethyst::ui::*;
 use amethyst::utils::removal::*;
 use amethyst_extra::set_discord_state;
+use amethyst_extra::dirty::Dirty;
 use amethyst::core::Time;
 use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
 use state::*;
 use tokio::runtime::Runtime;
-use {add_removal_to_entity, do_login, Auth};
+use {add_removal_to_entity, do_login, validate_auth_token, Auth};
 
 #[derive(Default)]
 pub struct LoginState;
@@ -27,7 +28,14 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
     fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
 
-        if let Some(_) = data.world.res.try_fetch::<Auth>() {
+        let auth = data.world.res.fetch::<Dirty<Auth>>();
+        if !auth.read().valid() {
+            if auth.should_validate() {
+                // Start validation
+                validate_auth_token(&mut data.world.write_resource(), auth.token.clone(), data.world.read_resource::<CallbackQueue>().send_handle());
+            }
+        } else {
+            // Valid
             return Trans::Switch(Box::new(MainMenuState::default()));
         }
 
