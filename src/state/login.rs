@@ -28,10 +28,11 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
     fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
 
-        let auth = data.world.res.fetch::<Dirty<Auth>>();
+        let auth = &mut data.world.res.fetch_mut::<Dirty<Auth>>();
         if !auth.read().valid() {
-            if auth.should_validate() {
+            if auth.read().should_validate() {
                 // Start validation
+                auth.write().set_validating();
                 validate_auth_token(&mut data.world.write_resource(), auth.token.clone(), data.world.read_resource::<CallbackQueue>().send_handle());
             }
         } else {

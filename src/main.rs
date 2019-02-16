@@ -105,7 +105,8 @@ pub fn do_login(
                 match serde_json::from_slice::<Auth>(&chunk) {
                     Ok(a) => queue
                         .send(Box::new(move |world| {
-                            world.add_resource(a.clone());
+                            world.write_resource::<Dirty<Auth>>().write().token = a.token.clone();
+                            world.write_resource::<Dirty<Auth>>().write().set_validated(true);
                         }))
                         .expect("Failed to push auth callback to future queue"),
                     Err(e) => error!("Failed to parse received data to Auth: {}", e),
@@ -183,7 +184,7 @@ pub fn validate_auth_token(
     let request = Request::post("https://hoppinworld.net:27015/validatetoken")
         .header("Content-Type", "application/json")
         .header("X-Authorization", format!("Bearer {}", auth_token))
-        .body(Body::from(auth_token))
+        .body(Body::from(json!(auth_token).to_string()))
         .unwrap();
 
     let future = client
@@ -358,7 +359,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(
             InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
         )?.with_bundle(UiBundle::<String, String>::new())?
-        .with(AutoSaveSystem::<Auth>::new(resources_directory.to_str().unwrap().to_owned() + "../auth_token.ron"), "auth_token_save", &[])        .with_barrier()
+        .with(AutoSaveSystem::<Auth>::new(resources_directory.to_str().unwrap().to_owned() + "/../auth_token.ron"), "auth_token_save", &[])        .with_barrier()
         .with_bundle(PhysicsBundle::new())?
         //.with(ForceUprightSystem::default(), "force_upright", &["sync_bodies_from_physics_system"])
         .with_bundle(RenderBundle::new(pipe, Some(display_config))
