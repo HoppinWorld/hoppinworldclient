@@ -11,7 +11,7 @@ use amethyst::renderer::{Camera, DirectionalLight, Light, Mesh, MeshData, PosTex
 use amethyst::ui::UiCreator;
 use amethyst::utils::removal::Removal;
 use amethyst_extra::nphysics_ecs::nphysics::object::BodyStatus;
-use amethyst_extra::nphysics_ecs::nphysics::object::Material as PhysicsMaterial;
+use amethyst_extra::nphysics_ecs::nphysics::material::BasicMaterial as PhysicsMaterial;
 use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
 use amethyst_extra::nphysics_ecs::*;
 use amethyst_extra::AssetLoader;
