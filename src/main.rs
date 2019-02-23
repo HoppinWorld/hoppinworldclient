@@ -26,6 +26,8 @@ extern crate ron;
 extern crate tokio;
 extern crate tokio_executor;
 extern crate uuid;
+#[macro_use]
+extern crate self_update;
 
 /*#[macro_use]
 extern crate derive_builder;*/
@@ -230,6 +232,50 @@ fn init_discord_rich_presence() -> Result<DiscordRichPresence, ()> {
     )
 }
 
+fn update() -> Result<(), Box<::std::error::Error>> {
+    let target = self_update::get_target()?;
+    let releases = self_update::backends::github::ReleaseList::configure()
+        .repo_owner("hoppinworld")
+        .repo_name("hoppinworldclient")
+        .with_target(&target)
+        .build()?
+        .fetch()?;
+    println!("Found Releases for target {:?}:", target);
+    println!("{:#?}\n", releases);
+
+    // get the first available release
+    let asset = releases[0]
+        .asset_for(&target).unwrap();
+
+    let tmp_dir = self_update::TempDir::new_in(::std::env::current_dir()?, "update_tmp")?;
+    println!("1");
+    let tmp_tarball_path = tmp_dir.path().join(&asset.name);
+    let tmp_tarball_extracted_path = tmp_dir.path().join("extracted");
+    std::fs::DirBuilder::new().create(tmp_tarball_extracted_path.clone()).expect("Failed to create extraction directory");
+    println!("2");
+    let tmp_tarball = ::std::fs::File::create(&tmp_tarball_path)?;
+
+    println!("3");
+    self_update::Download::from_url(&asset.download_url)
+        .download_to(&tmp_tarball)?;
+
+    let bin_name = std::path::PathBuf::from("hoppinworldupdated");
+    println!("4");
+    self_update::Extract::from_source(&tmp_tarball_path)
+        .archive(self_update::ArchiveKind::Zip)
+        .extract_into(&tmp_tarball_extracted_path)?;
+
+    let bkp_folder = tmp_dir.path().join("backup");
+    let bin_path = tmp_dir.path().join(bin_name);
+    println!("5");
+
+    self_update::Move::from_source(&tmp_tarball_extracted_path)
+        .replace_using_temp(&bkp_folder) // backup
+        .to_dest(&::std::env::current_exe()?.join(".."))?;
+
+    Ok(())
+}
+
 fn main() -> amethyst::Result<()> {
     /*
 
@@ -257,6 +303,8 @@ fn main() -> amethyst::Result<()> {
             allow_env_override: false,
         });
     }
+
+    update().expect("Failed to update.");
 
     let mut resources_directory = application_root_dir().expect("Failed to get app_root_dir.");
     resources_directory.push("assets");
