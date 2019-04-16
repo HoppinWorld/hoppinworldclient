@@ -3,7 +3,7 @@ Container(
     transform: (
         id: "all",
         anchor: Middle,
-        stretch: XY( x_margin: 0., y_margin: 0.),
+        stretch: XY( x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
         width: 20.,
         height: 20.,
     ),
@@ -12,7 +12,7 @@ Container(
     ),
     children: [
         // Title Left
-        Text(
+        Label(
             transform: (
                 id: "title_left",
                 x: -416.,
@@ -32,7 +32,7 @@ Container(
         ),
 
         // Title Right
-        Text(
+        Label(
             transform: (
                 id: "title_right",
                 x: 416.,
@@ -52,7 +52,7 @@ Container(
         ),
 
         // Username label
-        Text(
+        Label(
             transform: (
                 id: "username_label",
                 y: 150.,
@@ -60,7 +60,7 @@ Container(
                 height: 75.,
                 tab_order: -1,
                 anchor: Middle,
-                stretch: XY(x_margin: 0., y_margin: 0.),
+                stretch: XY(x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
             ),
             text: (
                 text: "Email Address",
@@ -85,7 +85,7 @@ Container(
                 image: Data(Rgba((0.914, 0.843, 0.345, 1.0), (channel: Srgb))),
             ),
             children: [
-                Text(
+                Label(
                     transform: (
                         id: "username",
                         z: 10.,
@@ -93,7 +93,7 @@ Container(
                         height: 75.,
                         tab_order: 1,
                         anchor: Middle,
-                        stretch: XY(x_margin: 0., y_margin: 0.),
+                        stretch: XY(x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
                         selectable: 1,
                         mouse_reactive: true,
                     ),
@@ -111,7 +111,7 @@ Container(
             ]
         ),
 
-        Text(
+        Label(
             transform: (
                 id: "password_label",
                 y: -75.,
@@ -119,7 +119,7 @@ Container(
                 height: 75.,
                 tab_order: -1,
                 anchor: Middle,
-                stretch: XY(x_margin: 0., y_margin: 0.),
+                stretch: XY(x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
             ),
             text: (
                 text: "Password",
@@ -144,7 +144,7 @@ Container(
                 image: Data(Rgba((0.914, 0.843, 0.345, 1.0), (channel: Srgb))),
             ),
             children: [
-                Text(
+                Label(
                     transform: (
                         id: "password",
                         width: 1000.,
@@ -152,7 +152,7 @@ Container(
                         z: 10.,
                         tab_order: 2,
                         anchor: Middle,
-                        stretch: XY(x_margin: 0., y_margin: 0.),
+                        stretch: XY(x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
                         selectable: 2,
                         mouse_reactive: true,
                     ),

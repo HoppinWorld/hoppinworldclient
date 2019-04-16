@@ -1,4 +1,4 @@
-use amethyst::core::nalgebra::{Point3, Vector2, Vector3};
+use amethyst::core::math::{Point3, Vector2, Vector3};
 use amethyst::core::{Time, Transform};
 use amethyst::ecs::{
     Entities, Entity, Join, Read, ReadStorage, Resources, System, SystemData, Write, WriteStorage,

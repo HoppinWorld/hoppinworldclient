@@ -1,4 +1,4 @@
-use amethyst::core::nalgebra::Vector3;
+use amethyst::core::math::Vector3;
 pub use amethyst::ecs::{Join, Read, ReadStorage, System, WriteStorage};
 use amethyst::ui::{UiText, UiTransform};
 use amethyst_extra::nphysics_ecs::DynamicBody;

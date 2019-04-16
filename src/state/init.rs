@@ -1,5 +1,5 @@
 use amethyst::controls::HideCursor;
-use amethyst::core::nalgebra::Vector3;
+use amethyst::core::math::Vector3;
 use amethyst::prelude::*;
 use amethyst::renderer::*;
 use amethyst::utils::application_root_dir;

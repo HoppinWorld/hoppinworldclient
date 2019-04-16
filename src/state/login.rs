@@ -20,7 +20,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/login_ui.ron", ()));
-        add_removal_to_entity(ui_root, RemovalId::LoginUi, &data.world);
+        add_removal_to_entity(ui_root, RemovalId::LoginUi, &mut data.world);
 
         set_discord_state(String::from("Login"), &mut data.world);
     }

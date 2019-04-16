@@ -15,7 +15,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for PauseMenuState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/pause_ui.ron", ()));
-        add_removal_to_entity(ui_root, RemovalId::PauseUi, &data.world);
+        add_removal_to_entity(ui_root, RemovalId::PauseUi, data.world);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {

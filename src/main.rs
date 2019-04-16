@@ -15,7 +15,6 @@ extern crate winit;
 extern crate derive_new;
 #[macro_use]
 extern crate specs_derive;
-extern crate amethyst_editor_sync;
 extern crate crossbeam_channel;
 extern crate hoppinworlddata;
 extern crate hoppinworldruntime;
@@ -36,7 +35,7 @@ use amethyst::assets::Prefab;
 use amethyst::assets::PrefabLoaderSystem;
 use amethyst::controls::*;
 use amethyst::controls::{CursorHideSystem, MouseFocusUpdateSystem};
-use amethyst::core::nalgebra::Point3;
+use amethyst::core::math::Point3;
 use amethyst::core::transform::TransformBundle;
 use amethyst::core::{Named, Time, Transform};
 use amethyst::ecs::{
@@ -52,7 +51,6 @@ use amethyst::shrev::{EventChannel, ReaderId};
 use amethyst::ui::*;
 use amethyst::utils::application_root_dir;
 use amethyst::utils::removal::Removal;
-use amethyst_editor_sync::*;
 use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
 use amethyst_extra::nphysics_ecs::*;
 use amethyst_gltf::*;
@@ -62,7 +60,7 @@ use amethyst_extra::dirty::Dirty;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-use amethyst::core::nalgebra::Vector3;
+use amethyst::core::math::Vector3;
 use amethyst::utils::fps_counter::FPSCounterBundle;
 use amethyst_extra::*;
 use hyper::{Body, Client, Request};
@@ -301,10 +299,11 @@ fn main() -> amethyst::Result<()> {
             level_filter: amethyst::LogLevelFilter::Error,
             log_file: None,// TODO some
             allow_env_override: false,
+            log_gfx_device_level: Some(amethyst::LogLevelFilter::Error),
         });
     }
 
-    update().expect("Failed to update.");
+    //update().expect("Failed to update.");
 
     let mut resources_directory = application_root_dir().expect("Failed to get app_root_dir.");
     resources_directory.push("assets");
@@ -348,7 +347,7 @@ fn main() -> amethyst::Result<()> {
         Stage::with_backbuffer()
             .clear_target([0.1, 0.1, 0.1, 1.0], 1.0)
             .with_pass(
-                DrawPbmSeparate::new().with_transparency(
+                DrawPbmSeparate::new().with_transparency_settings(
                     ColorMask::all(),
                     ALPHA,
                     Some(DepthMode::LessEqualWrite),
@@ -425,7 +424,8 @@ fn main() -> amethyst::Result<()> {
     .with_resource(AssetLoaderInternal::<FontAsset>::new())
     .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new())
     .with_resource(noclip)
-    .with_resource(TimeStep::Fixed(1./120.));
+    .with_resource(TimeStep::Fixed(1./120.))
+    .with_resource(Widgets::<UiButton, String>::default());
     if let Ok(discord) = init_discord_rich_presence() {
         game_builder = game_builder.with_resource(discord);
     }

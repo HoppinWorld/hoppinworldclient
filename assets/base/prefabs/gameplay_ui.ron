@@ -3,7 +3,7 @@ Container(
     transform: (
         id: "all",
         anchor: Middle,
-        stretch: XY( x_margin: 0., y_margin: 0.),
+        stretch: XY( x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
         width: 20.,
         height: 20.,
     ),
@@ -35,7 +35,7 @@ Container(
         ),
 
         // Timer
-        Text(
+        Label(
             transform: (
                 id: "timer",
                 y: -80.,
@@ -53,7 +53,7 @@ Container(
         ),
 
         // Previous Best
-        Text(
+        Label(
             transform: (
                 id: "pb",
                 x: 200.,
@@ -72,7 +72,7 @@ Container(
         ),
 
         // World Record
-        Text(
+        Label(
             transform: (
                 id: "wr",
                 x: -200.,
@@ -91,7 +91,7 @@ Container(
         ),
 
         // Segment
-        Text(
+        Label(
             transform: (
                 id: "segment",
                 x: 80.,
@@ -110,7 +110,7 @@ Container(
         ),
 
         // Speed
-        Text(
+        Label(
             transform: (
                 id: "speed",
                 x: -144.,

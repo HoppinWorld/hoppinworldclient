@@ -22,7 +22,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/result_ui.ron", ()));
-        add_removal_to_entity(ui_root, RemovalId::ResultUi, &data.world);
+        add_removal_to_entity(ui_root, RemovalId::ResultUi, data.world);
 
         // Time table.
         let runtime_progress = data.world.read_resource::<RuntimeProgress>().clone();

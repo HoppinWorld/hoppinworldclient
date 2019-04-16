@@ -3,7 +3,7 @@ Container(
     transform: (
         id: "all",
         anchor: Middle,
-        stretch: XY( x_margin: 0., y_margin: 0.),
+        stretch: XY( x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
         width: 20.,
         height: 20.,
     ),
@@ -12,7 +12,7 @@ Container(
     ),
     children: [
         // Title
-        Text(
+        Label(
             transform: (
                 id: "title",
                 y: -64.,
@@ -30,7 +30,7 @@ Container(
         ),
 
         // Map name
-        Text(
+        Label(
             transform: (
                 id: "map_name",
                 y: -170.,
@@ -48,7 +48,7 @@ Container(
         ),
 
         // Timer
-        Text(
+        Label(
             transform: (
                 id: "timer",
                 y: 180.,

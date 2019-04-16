@@ -2,7 +2,7 @@ use amethyst_extra::nphysics_ecs::ncollide::shape::*;
 //use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
 use amethyst::assets::{Handle, ProgressCounter};
 use amethyst::controls::FlyControlTag;
-use amethyst::core::nalgebra::{Isometry3, Matrix3, Point3, UnitQuaternion, Vector3};
+use amethyst::core::math::{Isometry3, Matrix3, Point3, UnitQuaternion, Vector3};
 use amethyst::core::*;
 use amethyst::ecs::prelude::ParallelIterator;
 use amethyst::ecs::*;
@@ -201,7 +201,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/gameplay_ui.ron", ()));
-        add_removal_to_entity(ui_root, RemovalId::GameplayUi, &data.world);
+        add_removal_to_entity(ui_root, RemovalId::GameplayUi, &mut data.world);
 
         // Reset runtime progress
         data.world.add_resource(RuntimeProgress::default());

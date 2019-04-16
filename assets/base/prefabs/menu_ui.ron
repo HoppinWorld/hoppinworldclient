@@ -3,7 +3,7 @@ Container(
     transform: (
         id: "all",
         anchor: Middle,
-        stretch: XY( x_margin: 0., y_margin: 0.),
+        stretch: XY( x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
         width: 20.,
         height: 20.,
     ),
@@ -12,7 +12,7 @@ Container(
     ),
     children: [
         // Title Left
-        Text(
+        Label(
             transform: (
                 id: "title_left",
                 x: -416.,
@@ -32,7 +32,7 @@ Container(
         ),
 
         // Title Right
-        Text(
+        Label(
             transform: (
                 id: "title_right",
                 x: 416.,

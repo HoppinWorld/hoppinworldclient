@@ -17,7 +17,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
         let ui_root = data
             .world
             .exec(|mut creator: UiCreator| creator.create("base/prefabs/map_select_ui.ron", ()));
-        add_removal_to_entity(ui_root, RemovalId::MapSelectUi, &data.world);
+        add_removal_to_entity(ui_root, RemovalId::MapSelectUi, &mut data.world);
 
         let font = data
             .world
@@ -34,8 +34,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
         let maps = data.world.read_resource::<MapInfoCache>().maps.clone();
         for (accum, (internal, info)) in maps.into_iter().enumerate() {
             info!("adding map!");
-            let entity =
-                UiButtonBuilder::<()>::new(format!("map_select_{}", internal), info.name.clone())
+            let tup =
+                UiButtonBuilder::<(), String>::new(info.name.clone())
+                    .with_id(format!("map_select_{}", internal))
                     .with_font(font.clone())
                     .with_text_color([0.2, 0.2, 0.2, 1.0])
                     .with_font_size(30.0)
@@ -44,7 +45,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
                     .with_position(0.0, -300.0 - 100.0 * accum as f32)
                     .with_anchor(Anchor::TopMiddle)
                     .build_from_world(data.world);
-            add_removal_to_entity(entity, RemovalId::MapSelectUi, &data.world);
+            add_removal_to_entity(tup.1.text_entity, RemovalId::MapSelectUi, &mut data.world);
         }
 
         set_discord_state(String::from("Main Menu"), &mut data.world);
@@ -70,13 +71,15 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
                         id => {
                             if id.starts_with("map_select_") {
                                 let map_name = &id[11..];
+                                let len = map_name.len();
+                                let map_name = &map_name[..len-4];
                                 change_map = Some(
                                     data.world
                                         .read_resource::<MapInfoCache>()
                                         .maps
                                         .iter()
                                         .find(|t| t.0 == map_name)
-                                        .unwrap()
+                                        .expect(&format!("Map not found in cache for name {:?}", map_name))
                                         .clone(),
                                 );
                             }
