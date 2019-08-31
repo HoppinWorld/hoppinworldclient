@@ -12,3 +12,11 @@
 [submodule "deps/assets"]
 	path = deps/assets
 	url = git@github.com:hoppinworld/assets
+[submodule "deps/data"]
+	path = deps/data
+	url = git@github.com:hoppinworld/data
+[submodule "deps/amethyst"]
+	path = deps/amethyst
+	url = git@github.com:jojolepro/amethyst
+	branch = hoppinworld
+
