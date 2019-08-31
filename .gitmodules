@@ -1,0 +1,12 @@
+[submodule "deps/amethyst-extra"]
+	path = deps/amethyst-extra
+	url = git@github.com:jojolepro/amethyst-extra
+[submodule "deps/specs-physics"]
+	path = deps/specs-physics
+	url = git@github.com:jojolepro/specs-physics
+[submodule "deps/runtime"]
+	path = deps/runtime
+	url = git@github.com:hoppinworld/runtime
+[submodule "deps/assets"]
+	path = deps/assets
+	url = git@github.com:hoppinworld/assets
