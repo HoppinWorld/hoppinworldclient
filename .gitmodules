@@ -1,9 +1,11 @@
 [submodule "deps/amethyst-extra"]
 	path = deps/amethyst-extra
 	url = git@github.com:jojolepro/amethyst-extra
+	branch = hoppinworld
 [submodule "deps/specs-physics"]
 	path = deps/specs-physics
 	url = git@github.com:jojolepro/specs-physics
+	branch = hoppinworld
 [submodule "deps/runtime"]
 	path = deps/runtime
 	url = git@github.com:hoppinworld/runtime
