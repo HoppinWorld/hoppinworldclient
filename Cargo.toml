@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 
 [dependencies]
-amethyst = { path = "deps/amethyst", features = ["gltf", "animation", "nightly"] }
+amethyst = { path = "deps/amethyst", features = ["vulkan", "gltf", "animation", "nightly"] }
 amethyst-extra = { path = "deps/amethyst-extra" }
-hoppinworld_assets = { path = "deps/assets" }
 hoppinworld_data = { path = "deps/data" }
 hoppinworld_runtime = { path = "deps/runtime" }
 
