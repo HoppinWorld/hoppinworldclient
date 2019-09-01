@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate amethyst;
-//extern crate amethyst_core;
 extern crate amethyst_extra;
-extern crate amethyst_gltf;
 #[macro_use]
 extern crate serde;
 #[macro_use]
@@ -13,11 +11,9 @@ extern crate partial_function;
 extern crate winit;
 #[macro_use]
 extern crate derive_new;
-#[macro_use]
-extern crate specs_derive;
 extern crate crossbeam_channel;
-extern crate hoppinworlddata;
-extern crate hoppinworldruntime;
+extern crate hoppinworld_data;
+extern crate hoppinworld_runtime;
 extern crate hyper;
 extern crate hyper_tls;
 extern crate num_traits;
@@ -25,8 +21,8 @@ extern crate ron;
 extern crate tokio;
 extern crate tokio_executor;
 extern crate uuid;
-#[macro_use]
-extern crate self_update;
+//#[macro_use]
+//extern crate self_update;
 
 /*#[macro_use]
 extern crate derive_builder;*/
@@ -53,9 +49,9 @@ use amethyst::utils::application_root_dir;
 use amethyst::utils::removal::Removal;
 use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
 use amethyst_extra::nphysics_ecs::*;
-use amethyst_gltf::*;
+use amethyst::gltf::*;
 use crossbeam_channel::Sender;
-use hoppinworldruntime::*;
+use hoppinworld_runtime::*;
 use amethyst_extra::dirty::Dirty;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -230,7 +226,7 @@ fn init_discord_rich_presence() -> Result<DiscordRichPresence, ()> {
     )
 }
 
-fn update() -> Result<(), Box<::std::error::Error>> {
+/*fn update() -> Result<(), Box<::std::error::Error>> {
     let target = self_update::get_target()?;
     let releases = self_update::backends::github::ReleaseList::configure()
         .repo_owner("hoppinworld")
@@ -272,7 +268,7 @@ fn update() -> Result<(), Box<::std::error::Error>> {
         .to_dest(&::std::env::current_exe()?.join(".."))?;
 
     Ok(())
-}
+}*/
 
 fn main() -> amethyst::Result<()> {
     /*
