@@ -1,4 +1,4 @@
-use hoppinworlddata::MapInfo;
+use hoppinworld_data::MapInfo;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, new)]
 pub struct MapInfoCache {

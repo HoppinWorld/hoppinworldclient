@@ -5,7 +5,7 @@ use amethyst::utils::removal::*;
 use amethyst_extra::set_discord_state;
 use amethyst_extra::dirty::Dirty;
 use amethyst::core::Time;
-use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
+use hoppinworld_runtime::{AllEvents, CustomTrans, RemovalId};
 use state::*;
 use tokio::runtime::Runtime;
 use {add_removal_to_entity, do_login, validate_auth_token, Auth};
@@ -28,7 +28,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
     fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         data.data.update(&data.world);
 
-        let auth = &mut data.world.res.fetch_mut::<Dirty<Auth>>();
+        let auth = &mut data.world.fetch_mut::<Dirty<Auth>>();
         if !auth.read().valid() {
             if auth.read().should_validate() {
                 // Start validation
@@ -61,7 +61,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                     match &*ui_transform_id {
                         "login_button" => {
                             let username_entity =
-                                UiFinder::fetch(&data.world.res).find("username").unwrap();
+                                UiFinder::fetch(&data.world).find("username").unwrap();
                             let username = data
                                 .world
                                 .read_storage::<UiText>()
@@ -70,7 +70,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for LoginState {
                                 .text
                                 .clone();
                             let password_entity =
-                                UiFinder::fetch(&data.world.res).find("password").unwrap();
+                                UiFinder::fetch(&data.world).find("password").unwrap();
                             let password = data
                                 .world
                                 .read_storage::<UiText>()

@@ -1,33 +1,33 @@
 use amethyst_extra::nphysics_ecs::ncollide::shape::*;
-//use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
+use amethyst::core::ecs::prelude::ParallelIterator;
 use amethyst::assets::{Handle, ProgressCounter};
 use amethyst::controls::FlyControlTag;
 use amethyst::core::math::{Isometry3, Matrix3, Point3, UnitQuaternion, Vector3};
 use amethyst::core::*;
-use amethyst::ecs::prelude::ParallelIterator;
 use amethyst::ecs::*;
 use amethyst::prelude::*;
-use amethyst::renderer::{Camera, DirectionalLight, Light, Mesh, MeshData, PosTex, Shape};
+use amethyst::renderer::*;
+use amethyst::renderer::rendy::mesh::PosTex;
 use amethyst::ui::UiCreator;
 use amethyst::utils::removal::Removal;
-use amethyst_extra::nphysics_ecs::nphysics::object::BodyStatus;
-use amethyst_extra::nphysics_ecs::nphysics::material::BasicMaterial as PhysicsMaterial;
+use amethyst_extra::nphysics_ecs::nphysics::object::*;
+use amethyst_extra::nphysics_ecs::nphysics::material::*;
 use amethyst_extra::nphysics_ecs::nphysics::volumetric::Volumetric;
 use amethyst_extra::nphysics_ecs::*;
 use amethyst_extra::AssetLoader;
 use amethyst_extra::*;
-use amethyst_gltf::{GltfSceneFormat, GltfSceneOptions};
-use hoppinworldruntime::{
+use amethyst::gltf::{GltfSceneAsset, GltfSceneFormat, GltfSceneOptions, VerticeData};
+use hoppinworld_runtime::{
     AllEvents, CustomTrans, ObjectType, RemovalId, RuntimeMapBuilder, RuntimeProgress,
 };
-use hoppinworldruntime::{PlayerFeetTag, PlayerSettings, PlayerTag};
+use hoppinworld_runtime::{PlayerFeetTag, PlayerSettings, PlayerTag};
 use num_traits::identities::One;
 use partial_function::PartialFunctionBuilder;
 use resource::CurrentMap;
 use state::{GameplayState, MapSelectState};
 use util::gltf_path_from_map;
 use verts_from_mesh_data;
-use {add_removal_to_entity, Gravity};
+use add_removal_to_entity;
 
 #[derive(Default)]
 pub struct MapLoadState {
@@ -46,19 +46,22 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         let name = data.world.read_resource::<CurrentMap>().0.clone();
         let display_name = data.world.read_resource::<CurrentMap>().1.name.clone();
 
+        let player_settings = (*data.world.read_resource::<PlayerSettings>()).clone();
+
         set_discord_state(
             format!("Hoppin On: {}", display_name.clone()),
             &mut data.world,
         );
 
-        let scene_handle = data.world.read_resource::<AssetLoader>().load(
+        let scene_handle: Option<Handle<GltfSceneAsset>> = data.world.read_resource::<AssetLoader>().load(
             //&format!("../../{}",gltf_path_from_map(&get_working_dir(), &name)),
             &gltf_path_from_map("../..", &name),
-            GltfSceneFormat,
-            GltfSceneOptions {
-                flip_v_coord: true,
-                ..Default::default()
-            },
+            GltfSceneFormat(
+                GltfSceneOptions {
+                    flip_v_coord: true,
+                    ..Default::default()
+                }
+            ),
             &mut data.world.write_resource(),
             &mut data.world.write_resource(),
             &data.world.read_resource(),
@@ -71,7 +74,6 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             return;
         }
 
-        let player_settings = data.world.read_resource::<PlayerSettings>().clone();
 
         self.load_progress = Some(pg);
 
@@ -80,6 +82,8 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .with(scene_handle.unwrap())
             .with(Removal::new(RemovalId::Scene))
             .build();
+
+        let physics_mat = MaterialHandle::new(BasicMaterial::new(0.0, 0.0));
 
         let mut jump = Jump::new(true, true, player_settings.jump_velocity, true);
         jump.jump_timing_boost = Some(
@@ -100,26 +104,26 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         let player_scale = Vector3::new(0.2, 0.4, 0.2); // Half the desired size
         let player_rotation =
             UnitQuaternion::from_euler_angles(std::f32::consts::FRAC_PI_2, 0.0, 0.0);
-        let s = Shape::Cylinder(12, None)
+        let s = amethyst::renderer::shape::Shape::Cylinder(12, None)
             .generate_vertices::<Vec<PosTex>>(None)
             .into_iter()
             .map(|mut pt| {
-                pt.position = player_rotation * pt.position;
-                pt.position.x *= player_scale.x;
-                pt.position.y *= player_scale.y;
-                pt.position.z *= player_scale.z;
-                Point3::from(pt.position)
+                let mut p = player_rotation * Point3::from(pt.position.0);
+                p.x *= player_scale.x;
+                p.y *= player_scale.y;
+                p.z *= player_scale.z;
+                p
             })
             .collect::<Vec<_>>();
-        let s2 = Shape::Cylinder(12, None)
+        let s2 = amethyst::renderer::shape::Shape::Cylinder(12, None)
             .generate_vertices::<Vec<PosTex>>(None)
             .into_iter()
             .map(|mut pt| {
-                pt.position = player_rotation * pt.position;
-                pt.position.x *= player_scale.x * 0.95;
-                pt.position.y *= 0.1;
-                pt.position.z *= player_scale.z * 0.95;
-                Point3::from(pt.position)
+                let mut p = player_rotation * Point3::from(pt.position.0);
+                p.x *= player_scale.x * 0.95;
+                p.y *= 0.1;
+                p.z *= player_scale.z * 0.95;
+                p
             })
             .collect::<Vec<_>>();
         //let shape = ShapeHandle::new(Cylinder::new(0.4, 0.2));
@@ -135,29 +139,29 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         let player_entity = data
             .world
             .create_entity()
-            .with(player_settings.movement)
-            .with(player_settings.ground_friction)
+            .with(player_settings.movement.clone())
+            .with(player_settings.ground_friction.clone())
             .with(FlyControlTag)
             .with(ObjectType::Player)
             .with(jump)
             .with(PlayerTag)
-            .with(DynamicBody::new_rigidbody(
-                player_settings.mass,
-                Matrix3::one(),
-                shape.center_of_mass(),
+            .with(BodyComponent::new(
+                    RigidBodyDesc::new()
+                        .mass(player_settings.mass)
+                        .local_center_of_mass(shape.center_of_mass())
+                        .build()
             ))
-            .with(
-                ColliderBuilder::from(shape)
-                    .collision_group(ObjectType::Player.into()) // Player
-                    .physics_material(PhysicsMaterial::new(0.0, 0.0))
-                    .build()
-                    .unwrap(),
-            )
-            .with(GlobalTransform::default())
             .with(Transform::default())
             .with(Removal::new(RemovalId::Scene))
             .build();
 
+        data.world.write_storage::<ColliderComponent<f32>>().insert(player_entity, 
+            ColliderComponent(ColliderDesc::new(shape)
+                .set_collision_groups(ObjectType::Player.into()) // Player
+                .set_material(physics_mat.clone())
+                .build(BodyPartHandle(player_entity, 0))));
+
+        // Create the main camera
         let tr = Transform::from(Vector3::new(0.0, 0.25, 0.0));
         data.world
             .create_entity()
@@ -175,20 +179,17 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             .world
             .create_entity()
             .with(ObjectType::PlayerFeet)
-            .with(
-                //ColliderBuilder::from(ShapeHandle::new(Cylinder::new(0.01, 0.155)))
-                ColliderBuilder::from(feet_shape)
-                    .collision_group(ObjectType::PlayerFeet.into()) // Player Feet
-                    .physics_material(PhysicsMaterial::new(0.0, 0.0))
-                    .trigger()
-                    .build()
-                    .unwrap(),
-            )
-            .with(GlobalTransform::default())
             .with(PlayerFeetTag)
             .with(Transform::default())
             .with(Removal::new(RemovalId::Scene))
             .build();
+
+        data.world.write_storage::<ColliderComponent<f32>>().insert(ground_collider, 
+            ColliderComponent(ColliderDesc::new(feet_shape)
+                .set_collision_groups(ObjectType::PlayerFeet.into()) // Player Feet
+                .set_material(physics_mat.clone())
+                .set_is_sensor(true)
+                .build(BodyPartHandle(ground_collider, 0))));
 
         // Assign secondary collider to player's Grounded component
         grounded.watch_entity = Some(ground_collider);
@@ -204,10 +205,10 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
         add_removal_to_entity(ui_root, RemovalId::GameplayUi, &mut data.world);
 
         // Reset runtime progress
-        data.world.add_resource(RuntimeProgress::default());
+        data.world.insert(RuntimeProgress::default());
     }
 
-    fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {
+    fn update(&mut self, mut data: StateData<GameData>) -> CustomTrans<'a, 'b> {
         if self.load_progress.is_none() {
             return Trans::Switch(Box::new(MapSelectState::default()));
         }
@@ -216,7 +217,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
             let entity_sizes = (
                 &*data.world.entities(),
                 &data.world.read_storage::<Transform>(),
-                &data.world.read_storage::<MeshData>(),
+                &data.world.read_storage::<VerticeData>(),
                 &data.world.read_storage::<Named>(),
             )
                 .par_join()
@@ -242,24 +243,22 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                         mut meshes,
                         players,
                         mut removals,
-                        mut global_transforms,
                         mut ground_checks,
                     ) = <(
                         WriteStorage<Transform>,
-                        WriteStorage<Collider>,
+                        WriteStorage<ColliderComponent<f32>>,
                         WriteStorage<ObjectType>,
                         WriteStorage<Handle<Mesh>>,
                         ReadStorage<PlayerTag>,
                         WriteStorage<Removal<RemovalId>>,
-                        WriteStorage<GlobalTransform>,
                         WriteStorage<GroundCheckTag>,
-                    ) as SystemData>::fetch(&data.world.res);
+                    ) as SystemData>::fetch(&mut data.world);
 
                     let mut start_zone_pos = None;
                     let mut start_zone_rotation = None;
 
                     for (entity, transform, mesh, name) in entity_sizes {
-                        let (obj_type, coll_strat) = if name == "StartZone" {
+                        let (obj_type, is_sensor) = if name == "StartZone" {
                             // Move player to StartZone
                             start_zone_pos = Some(transform.translation().clone());
                             start_zone_rotation = Some(transform.rotation().clone());
@@ -270,7 +269,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 
                             runtime_map = runtime_map.start_zone(entity);
 
-                            (ObjectType::StartZone, ColliderType::Trigger)
+                            (ObjectType::StartZone, true)
                         } else if name == "EndZone" {
                             if runtime_map.end_zone.is_some() {
                                 panic!("There can be only one EndZone per map");
@@ -278,11 +277,11 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
 
                             runtime_map = runtime_map.end_zone(entity);
 
-                            (ObjectType::EndZone, ColliderType::Trigger)
+                            (ObjectType::EndZone, true)
                         } else if name.starts_with("KillZone") {
-                            (ObjectType::KillZone, ColliderType::Trigger)
+                            (ObjectType::KillZone, true)
                         } else if name.starts_with("Ignore") {
-                            (ObjectType::Ignore, ColliderType::Trigger)
+                            (ObjectType::Ignore, true)
                         } else if name.starts_with("SegmentZone") {
                             let id_str = &name[11..];
                             let id = id_str.to_string().parse::<u8>().unwrap(); // TODO error handling for maps
@@ -291,9 +290,9 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                             }
 
                             runtime_map.segment_zones.push((id, entity));
-                            (ObjectType::SegmentZone(id), ColliderType::Trigger)
+                            (ObjectType::SegmentZone(id), true)
                         } else {
-                            (ObjectType::Scene, ColliderType::Collider)
+                            (ObjectType::Scene, false)
                         };
 
                         if name.contains("Invisible") {
@@ -305,17 +304,20 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                         object_types
                             .insert(entity, obj_type)
                             .expect("Failed to add ObjectType to map mesh");
+
+                        // TODO: duplicated code
+                        let physics_mat = MaterialHandle::new(BasicMaterial::new(0.0, 0.0));
+
                         match ConvexHull::try_from_points(&mesh) {
                             Some(handle) => {
                                 colliders
                                     .insert(
                                         entity,
-                                        ColliderBuilder::from(ShapeHandle::new(handle))
-                                            .collision_group(obj_type.into()) // Scene or zones
-                                            .physics_material(PhysicsMaterial::new(0.0, 0.0))
-                                            .query_type(coll_strat)
-                                            .build()
-                                            .unwrap(),
+                                        ColliderComponent(ColliderDesc::new(ShapeHandle::new(handle))
+                                            .set_collision_groups(obj_type.into()) // Scene or zones
+                                            .set_material(physics_mat.clone())
+                                            .set_is_sensor(is_sensor)
+                                            .build(BodyPartHandle(entity, 0)))
                                     )
                                     .expect("Failed to add Collider to map mesh");
                             }
@@ -324,20 +326,18 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                         if obj_type == ObjectType::Scene {
                             ground_checks.insert(entity, GroundCheckTag).unwrap();
                         }
-                        global_transforms
-                            .insert(entity, GlobalTransform(transform.matrix()))
-                            .unwrap();
                         removals
                             .insert(entity, Removal::new(RemovalId::Scene))
                             .unwrap();
                     }
 
-                    for (mut tr, _) in (&mut transforms, &players).join() {
+                    /*for (tr, _) in (&mut transforms, &players).join() {
                         *tr.translation_mut() = start_zone_pos.expect("No start zone in scene.");
                         *tr.rotation_mut() = start_zone_rotation.expect("No start zone in scene.");
 
-                        //*tr.translation_mut() = Vector3::new(0.0, 10.0, 10.0);
-                    }
+                        // *tr.translation_mut() = Vector3::new(0.0, 10.0, 10.0);
+                    }*/
+                    panic!("FIX THIS TODO TODO TODO TODO ^^^^^^^^^^^^^^^^^");
 
                     max_segment
                 };
@@ -348,7 +348,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapLoadState {
                     .unwrap();
 
                 data.world
-                    .add_resource(RuntimeProgress::new(max_segment + 1));
+                    .insert(RuntimeProgress::new(max_segment + 1));
             }
         } else if self.init_done {
             return Trans::Switch(Box::new(GameplayState::default()));

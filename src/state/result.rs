@@ -1,13 +1,13 @@
 use amethyst::ecs::SystemData;
 use amethyst::input::is_key_down;
 use amethyst::prelude::*;
-use amethyst::renderer::VirtualKeyCode;
+use amethyst::input::VirtualKeyCode;
 use amethyst::ui::{
-    Anchor, FontFormat, UiCreator, UiEvent, UiEventType, UiFinder, UiText, UiTransform,
+    Anchor, TtfFormat, UiCreator, UiEvent, UiEventType, UiFinder, UiText, UiTransform,
 };
 use amethyst::utils::removal::{exec_removal, Removal};
 use amethyst_extra::AssetLoader;
-use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId, RuntimeProgress};
+use hoppinworld_runtime::{AllEvents, CustomTrans, RemovalId, RuntimeProgress};
 use resource::CurrentMap;
 use state::MapSelectState;
 use {add_removal_to_entity, sec_to_display, submit_score, Auth, ScoreInsertRequest};
@@ -25,7 +25,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
         add_removal_to_entity(ui_root, RemovalId::ResultUi, data.world);
 
         // Time table.
-        let runtime_progress = data.world.read_resource::<RuntimeProgress>().clone();
+        let runtime_progress = (*data.world.read_resource::<RuntimeProgress>()).clone();
 
         info!("SEGMENT TIMES: ");
         for t in &runtime_progress.segment_times {
@@ -39,8 +39,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
             .read_resource::<AssetLoader>()
             .load(
                 "font/arial.ttf",
-                FontFormat::Ttf,
-                (),
+                TtfFormat,
                 &mut data.world.write_resource(),
                 &mut data.world.write_resource(),
                 &data.world.read_resource(),
@@ -55,6 +54,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
                 .with(UiTransform::new(
                     String::from(""),
                     Anchor::TopMiddle,
+                    Anchor::Middle,
                     -200.0,
                     -350.0 - 100.0 * segment as f32,
                     3.0,
@@ -81,6 +81,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
                 .with(UiTransform::new(
                     String::from(""),
                     Anchor::TopMiddle,
+                    Anchor::Middle,
                     200.0,
                     -350.0 - 100.0 * segment as f32,
                     3.0,
@@ -98,7 +99,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
         }
 
         // Web submit score if logged in
-        if let Some(auth_token) = data.world.res.try_fetch::<Auth>().map(|a| a.token.clone()) {
+        if let Some(auth_token) = data.world.try_fetch::<Auth>().map(|a| a.token.clone()) {
             let times = runtime_progress.segment_times.iter().map(|f| *f as f32);
             let total_time = runtime_progress
                 .segment_times
@@ -125,7 +126,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for ResultState {
 
         if !self.finished {
             // Set the map name
-            if let Some(map_name_entity) = UiFinder::fetch(&data.world.res).find("map_name") {
+            if let Some(map_name_entity) = UiFinder::fetch(&data.world).find("map_name") {
                 let map_name = data.world.read_resource::<CurrentMap>().1.name.clone();
                 data.world
                     .write_storage::<UiText>()

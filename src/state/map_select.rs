@@ -1,11 +1,11 @@
 use add_removal_to_entity;
 use amethyst::input::*;
 use amethyst::prelude::*;
-use amethyst::renderer::VirtualKeyCode;
+use amethyst::input::VirtualKeyCode;
 use amethyst::ui::*;
 use amethyst::utils::removal::*;
 use amethyst_extra::{set_discord_state, AssetLoader};
-use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
+use hoppinworld_runtime::{AllEvents, CustomTrans, RemovalId};
 use resource::{CurrentMap, MapInfoCache};
 use state::*;
 
@@ -24,8 +24,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
             .read_resource::<AssetLoader>()
             .load(
                 "font/arial.ttf",
-                FontFormat::Ttf,
-                (),
+                TtfFormat,
                 &mut data.world.write_resource(),
                 &mut data.world.write_resource(),
                 &data.world.read_resource(),
@@ -96,7 +95,7 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for MapSelectState {
         }
 
         if let Some(row) = change_map {
-            data.world.add_resource(CurrentMap::new(row.0, row.1));
+            data.world.insert(CurrentMap::new(row.0, row.1));
             return Trans::Switch(Box::new(MapLoadState::default()));
         }
         Trans::None

@@ -2,9 +2,9 @@ use amethyst::controls::HideCursor;
 use amethyst::core::Time;
 use amethyst::input::*;
 use amethyst::prelude::*;
-use amethyst::renderer::VirtualKeyCode;
+use amethyst::input::VirtualKeyCode;
 use amethyst::utils::removal::*;
-use hoppinworldruntime::{AllEvents, CustomStateEvent, CustomTrans, RemovalId};
+use hoppinworld_runtime::{AllEvents, CustomStateEvent, CustomTrans, RemovalId};
 use state::*;
 
 #[derive(Default)]

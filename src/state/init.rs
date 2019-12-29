@@ -2,10 +2,12 @@ use amethyst::controls::HideCursor;
 use amethyst::core::math::Vector3;
 use amethyst::prelude::*;
 use amethyst::renderer::*;
+use amethyst::renderer::resources::AmbientColor;
+use amethyst::renderer::palette::*;
 use amethyst::utils::application_root_dir;
 use amethyst::utils::removal::*;
 use amethyst_extra::nphysics_ecs::*;
-use hoppinworldruntime::{
+use hoppinworld_runtime::{
     generate_collision_matrix, AllEvents, CustomTrans, ObjectType, PlayerSettings, RemovalId,
 };
 use state::login::LoginState;
@@ -19,12 +21,12 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
     fn on_start(&mut self, data: StateData<GameData>) {
         data.world.register::<ObjectType>();
         data.world.register::<Removal<RemovalId>>();
-        data.world.add_resource(get_all_maps(
+        data.world.insert(get_all_maps(
             &application_root_dir().unwrap().to_str().unwrap(),
         ));
-        data.world.add_resource(AmbientColor(Rgba::from([0.1; 3])));
+        data.world.insert(AmbientColor(Srgba::new(0.1, 0.1, 0.1, 1.0)));
         let hide_cursor = HideCursor { hide: false };
-        data.world.add_resource(hide_cursor);
+        data.world.insert(hide_cursor);
 
         let mut player_settings_path = application_root_dir().unwrap();
         player_settings_path.push("assets/base/config/player.ron");
@@ -39,13 +41,13 @@ impl<'a, 'b> State<GameData<'a, 'b>, AllEvents> for InitState {
                 player_settings_path
             ));
 
-        *data.world.write_resource::<Gravity>() = Gravity::new(0.0, player_settings.gravity, 0.0);
+        //*data.world.write_resource::<Gravity>() = Gravity::new(0.0, player_settings.gravity, 0.0);
 
-        data.world.add_resource(player_settings);
+        data.world.insert(player_settings);
 
         //let mut runtime = Arc::new(Mutex::new(Runtime::new().expect("Failed to create tokio runtime")));
         let runtime = Runtime::new().expect("Failed to create tokio runtime");
-        data.world.add_resource(runtime);
+        data.world.insert(runtime);
     }
 
     fn update(&mut self, data: StateData<GameData>) -> CustomTrans<'a, 'b> {

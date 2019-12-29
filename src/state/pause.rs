@@ -1,11 +1,11 @@
 use add_removal_to_entity;
 use amethyst::input::*;
 use amethyst::prelude::*;
-use amethyst::renderer::VirtualKeyCode;
+use amethyst::input::VirtualKeyCode;
 use amethyst::shrev::EventChannel;
 use amethyst::ui::*;
 use amethyst::utils::removal::*;
-use hoppinworldruntime::{AllEvents, CustomStateEvent, CustomTrans, RemovalId};
+use hoppinworld_runtime::{AllEvents, CustomStateEvent, CustomTrans, RemovalId};
 
 #[derive(Default)]
 pub struct PauseMenuState;

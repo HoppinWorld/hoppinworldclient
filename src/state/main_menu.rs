@@ -4,7 +4,7 @@ use amethyst::ui::*;
 use amethyst::utils::removal::*;
 use amethyst::core::Time;
 use amethyst_extra::set_discord_state;
-use hoppinworldruntime::{AllEvents, CustomTrans, RemovalId};
+use hoppinworld_runtime::{AllEvents, CustomTrans, RemovalId};
 use state::*;
 
 #[derive(Default)]

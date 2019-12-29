@@ -1,4 +1,4 @@
-use hoppinworlddata::MapInfo;
+use hoppinworld_data::MapInfo;
 
 /// Single row of the MapInfoCache
 /// File name -> MapInfo

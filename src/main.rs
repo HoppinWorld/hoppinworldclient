@@ -27,27 +27,21 @@ extern crate uuid;
 /*#[macro_use]
 extern crate derive_builder;*/
 
-use amethyst::assets::Prefab;
-use amethyst::assets::PrefabLoaderSystem;
+use amethyst::assets::*;
 use amethyst::controls::*;
 use amethyst::controls::{CursorHideSystem, MouseFocusUpdateSystem};
 use amethyst::core::math::Point3;
 use amethyst::core::transform::TransformBundle;
 use amethyst::core::{Named, Time, Transform};
-use amethyst::ecs::{
-    Entities, Entity, Join, Read, ReadStorage, Resources, System, SystemData, Write, WriteStorage,
-};
-use amethyst::input::InputBundle;
+use amethyst::ecs::*;
+use amethyst::input::*;
 use amethyst::prelude::*;
-use amethyst::renderer::{
-    AmbientColor, Camera, ColorMask, DepthMode, DisplayConfig, DrawPbmSeparate, Light, MeshData,
-    Pipeline, RenderBundle, Stage, ALPHA,
-};
+use amethyst::renderer::*;
+use amethyst::renderer::types::DefaultBackend;
 use amethyst::shrev::{EventChannel, ReaderId};
 use amethyst::ui::*;
 use amethyst::utils::application_root_dir;
 use amethyst::utils::removal::Removal;
-use amethyst_extra::nphysics_ecs::ncollide::events::ProximityEvent;
 use amethyst_extra::nphysics_ecs::*;
 use amethyst::gltf::*;
 use crossbeam_channel::Sender;
@@ -57,7 +51,7 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use amethyst::core::math::Vector3;
-use amethyst::utils::fps_counter::FPSCounterBundle;
+use amethyst::utils::fps_counter::FpsCounterBundle;
 use amethyst_extra::*;
 use hyper::{Body, Client, Request};
 use hyper_tls::HttpsConnector;
@@ -295,7 +289,7 @@ fn main() -> amethyst::Result<()> {
             level_filter: amethyst::LogLevelFilter::Error,
             log_file: None,// TODO some
             allow_env_override: false,
-            log_gfx_device_level: Some(amethyst::LogLevelFilter::Error),
+            ..Default::default()
         });
     }
 
@@ -307,7 +301,6 @@ fn main() -> amethyst::Result<()> {
     let asset_loader = AssetLoader::new(&resources_directory.to_str().unwrap(), "base");
 
     let display_config_path = asset_loader.resolve_path("config/display.ron").unwrap();
-    let display_config = DisplayConfig::load(&display_config_path);
 
     let key_bindings_path = asset_loader.resolve_path("config/input.ron").unwrap();
 
@@ -339,7 +332,7 @@ fn main() -> amethyst::Result<()> {
     .sync_resource::<HideCursor>("HideCursor")
     ;*/
 
-    let pipe = Pipeline::build().with_stage(
+    /*let pipe = Pipeline::build().with_stage(
         Stage::with_backbuffer()
             .clear_target([0.1, 0.1, 0.1, 1.0], 1.0)
             .with_pass(
@@ -355,27 +348,29 @@ fn main() -> amethyst::Result<()> {
                    )*/
             )
             .with_pass(DrawUi::new()),
-    );
+    );*/
 
-    let noclip = NoClip::new(String::from("noclip"));
+    let noclip = NoClip::<StringBindings>::new(String::from("noclip"));
+
+    let mut world = World::new();
 
     let game_data = GameDataBuilder::default()
         .with(RelativeTimerSystem, "relative_timer", &[])
-        .with(
-            PrefabLoaderSystem::<ScenePrefab>::default(),
+        .with_system_desc(
+            PrefabLoaderSystemDesc::<ScenePrefab>::default(),
             "map_loader",
             &[],
         )
-        .with(
-            GltfSceneLoaderSystem::default(),
+        .with_system_desc(
+            GltfSceneLoaderSystemDesc::default(),
             "gltf_loader",
             &["map_loader"],
         ).with(
-            FPSRotationRhusicsSystem::<String, String>::new(0.005, 0.005),
+            FPSRotationRhusicsSystem::<String, String>::new(0.005, 0.005, &mut world),
             "free_rotation",
             &[],
-        ).with(MouseFocusUpdateSystem::new(), "mouse_focus", &[])
-        .with(CursorHideSystem::new(), "cursor_hide", &[])
+        ).with_system_desc(MouseFocusUpdateSystemDesc::default(), "mouse_focus", &[])
+        .with_system_desc(CursorHideSystemDesc::default(), "cursor_hide", &[])
         .with(PlayerFeetSync, "feet_sync", &[])
         // runs one frame late?
         .with(GroundCheckerSystem::new(Vec::<ObjectType>::new()), "ground_checker", &["feet_sync"])
@@ -386,7 +381,7 @@ fn main() -> amethyst::Result<()> {
             "ground_friction",
             &["ground_checker", "jump"],
         ).with(
-            BhopMovementSystem::<String, String>::new(
+            BhopMovementSystem::<StringBindings>::new(
                 Some(String::from("right")),
                 Some(String::from("forward")),
             ),
@@ -400,15 +395,22 @@ fn main() -> amethyst::Result<()> {
         //.with(FreeRotationSystem::<String, String>::new(0.03, 0.03), "noclip_rotation", &[])
         //.with(FlyMovementSystem::<String, String>::new(6.0, Some("right".to_string()), Some("up".to_string()), Some("forward".to_string())), "fly_movement", &[])
         .with_bundle(
-            InputBundle::<String, String>::new().with_bindings_from_file(&key_bindings_path)?,
-        )?.with_bundle(UiBundle::<String, String>::new())?
-        .with(AutoSaveSystem::<Auth>::new(resources_directory.to_str().unwrap().to_owned() + "/../auth_token.ron"), "auth_token_save", &[])        .with_barrier()
-        .with_bundle(PhysicsBundle::new())?
+            InputBundle::<StringBindings>::new().with_bindings_from_file(&key_bindings_path)?,
+        )?.with_bundle(UiBundle::<StringBindings>::new())?
+        .with(AutoSaveSystem::<Auth>::new(resources_directory.to_str().unwrap().to_owned() + "/../auth_token.ron", &mut world), "auth_token_save", &[])        .with_barrier()
+        .with_bundle(PhysicsBundle::<f32, Transform>::new(Vector3::new(0.0, 0.0, 0.0), &[]))? // TODO: fix gravity value
         //.with(ForceUprightSystem::default(), "force_upright", &["sync_bodies_from_physics_system"])
-        .with_bundle(RenderBundle::new(pipe, Some(display_config))
+        /*.with_bundle(RenderBundle::new(pipe, Some(display_config))
             //.with_visibility_sorting(&[])
+        )?*/
+        .with_bundle(
+            RenderingBundle::<DefaultBackend>::new()
+                .with_plugin(RenderToWindow::from_config_path(display_config_path)?
+                             .with_clear([0.1, 0.1, 0.1, 1.0]))
+                .with_plugin(RenderPbr3D::default().with_skinning())
+                .with_plugin(RenderUi::default())
         )?
-        .with_bundle(FPSCounterBundle)?
+        .with_bundle(FpsCounterBundle)?
         //.with_bundle(editor_bundle)?
         ;
 
@@ -420,7 +422,6 @@ fn main() -> amethyst::Result<()> {
     .with_resource(AssetLoaderInternal::<FontAsset>::new())
     .with_resource(AssetLoaderInternal::<Prefab<GltfPrefab>>::new())
     .with_resource(noclip)
-    .with_resource(TimeStep::Fixed(1./120.))
     .with_resource(Widgets::<UiButton, String>::default());
     if let Ok(discord) = init_discord_rich_presence() {
         game_builder = game_builder.with_resource(discord);

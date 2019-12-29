@@ -1,36 +1,33 @@
 use amethyst::core::math::{Point3, Vector2, Vector3};
 use amethyst::core::{Time, Transform};
 use amethyst::ecs::{
-    Entities, Entity, Join, Read, ReadStorage, Resources, System, SystemData, Write, WriteStorage,
+    Entities, Entity, Join, Read, ReadExpect, ReadStorage, System, Write, WriteStorage,
 };
 use amethyst::shrev::{EventChannel, ReaderId};
 use amethyst_extra::nphysics_ecs::*;
 use amethyst_extra::BhopMovement3D;
-use hoppinworldruntime::{CustomStateEvent, ObjectType, PlayerTag, RuntimeProgress};
+use hoppinworld_runtime::{CustomStateEvent, ObjectType, PlayerTag, RuntimeProgress};
 use RelativeTimer;
 
 /// Very game dependent.
 /// Don't try to make that generic.
 #[derive(Default)]
 pub struct ContactSystem {
-    contact_reader: Option<ReaderId<EntityProximityEvent>>,
-    collision_reader: Option<ReaderId<EntityContactEvent>>,
 }
 
 impl<'a> System<'a> for ContactSystem {
     type SystemData = (
         Entities<'a>,
         WriteStorage<'a, Transform>,
-        Read<'a, EventChannel<EntityProximityEvent>>,
+        ReadExpect<'a, GeometricalWorldRes<f32>>,
         Write<'a, RelativeTimer>,
         Read<'a, Time>,
         ReadStorage<'a, ObjectType>,
         ReadStorage<'a, PlayerTag>,
         ReadStorage<'a, BhopMovement3D>,
-        WriteStorage<'a, DynamicBody>,
+        WriteRigidBodies<'a, f32>,
         Write<'a, EventChannel<CustomStateEvent>>,
         Write<'a, RuntimeProgress>,
-        Read<'a, EventChannel<EntityContactEvent>>,
     );
 
     fn run(
@@ -38,7 +35,7 @@ impl<'a> System<'a> for ContactSystem {
         (
             entities,
             mut transforms,
-            contacts,
+            geo_world,
             mut timer,
             time,
             object_types,
@@ -47,7 +44,6 @@ impl<'a> System<'a> for ContactSystem {
             mut rigid_bodies,
             mut state_eventchannel,
             mut runtime_progress,
-            contacts2,
         ): Self::SystemData,
     ) {
         // Contact events
@@ -56,10 +52,10 @@ impl<'a> System<'a> for ContactSystem {
         }*/
 
         // Proximity events
-        for contact in contacts.read(&mut self.contact_reader.as_mut().unwrap()) {
+        for contact in geo_world.proximity_events() {
             info!("Collision: {:?}", contact);
-            let type1 = object_types.get(contact.0);
-            let type2 = object_types.get(contact.1);
+            let type1 = object_types.get(contact.collider1);
+            let type2 = object_types.get(contact.collider2);
 
             if type1.is_none() || type2.is_none() {
                 continue;
@@ -69,10 +65,10 @@ impl<'a> System<'a> for ContactSystem {
 
             let (_player, other, player_entity) = if *type1 == ObjectType::Player {
                 //(contact.bodies.0,contact.bodies.1)
-                (type1, type2, contact.0)
+                (type1, type2, contact.collider1)
             } else if *type2 == ObjectType::Player {
                 //(contact.bodies.1,contact.bodies.0)
-                (type2, type1, contact.1)
+                (type2, type1, contact.collider2)
             } else {
                 continue;
             };
@@ -89,13 +85,12 @@ impl<'a> System<'a> for ContactSystem {
                     {
                         if entity == player_entity {
                             let max_vel = movement.max_velocity_ground;
-                            let cur_vel3 = rb.velocity.linear;
+                            let cur_vel3 = rb.velocity().linear;
                             let mut cur_vel_flat = Vector2::new(cur_vel3.x, cur_vel3.z);
                             let cur_vel_flat_mag = cur_vel_flat.magnitude();
                             if cur_vel_flat_mag >= max_vel {
                                 cur_vel_flat = cur_vel_flat.normalize() * max_vel;
-                                rb.velocity.linear =
-                                    Vector3::new(cur_vel_flat.x, cur_vel3.y, cur_vel_flat.y);
+                                rb.set_linear_velocity(Vector3::new(cur_vel_flat.x, cur_vel3.y, cur_vel_flat.y));
                             }
                         }
                     }
@@ -147,25 +142,13 @@ impl<'a> System<'a> for ContactSystem {
                 }
                 ObjectType::SegmentZone(id) => {
                     if *id >= runtime_progress.current_segment {
-                        runtime_progress.segment_times[(*id - 1) as usize] = timer.duration();
-                        runtime_progress.current_segment = *id + 1;
+                        runtime_progress.segment_times[(id - 1) as usize] = timer.duration();
+                        runtime_progress.current_segment = id + 1;
                     }
                     info!("segment done");
                 }
                 _ => {}
             }
         }
-    }
-
-    fn setup(&mut self, res: &mut Resources) {
-        Self::SystemData::setup(res);
-        self.contact_reader = Some(
-            res.fetch_mut::<EventChannel<EntityProximityEvent>>()
-                .register_reader(),
-        );
-        self.collision_reader = Some(
-            res.fetch_mut::<EventChannel<EntityContactEvent>>()
-                .register_reader(),
-        );
     }
 }
