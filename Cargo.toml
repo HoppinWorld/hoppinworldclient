@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = ["Joël Lupien (Jojolepro) <jojolepromain@gmail.com>"]
 
 [dependencies]
-amethyst = { path = "amethyst", features = ["vulkan", "gltf", "animation", "nightly"] }
-amethyst-extra = { path = "amethyst-extra" }
-hoppinworld_data = { path = "data" }
-hoppinworld_runtime = { path = "runtime" }
+amethyst = { git = "https://github.com/jojolepro/amethyst", branch = "hoppinworld", features = ["vulkan", "gltf", "animation", "nightly"] }
+amethyst-extra = { path = "../amethyst-extra" }
+hoppinworld_data = { path = "../data" }
+hoppinworld_runtime = { path = "../runtime" }
 
 num-traits = "0.2"
 hyper = "0.12.11"
